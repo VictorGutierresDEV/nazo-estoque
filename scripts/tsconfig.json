@@ -1,0 +1,16 @@
+{
+  // Os scripts rodam direto no Node com type stripping, e por isso importam
+  // com a extensão .ts explícita — o que o tsconfig do app rejeita. Ficam
+  // fora do build do Next e são checados por aqui: npx tsc -p scripts
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "jsx": "preserve",
+    "lib": ["esnext"],
+    "types": ["node"]
+  },
+  "include": ["./**/*.ts", "../src/lib/**/*.ts"],
+  "exclude": []
+}
