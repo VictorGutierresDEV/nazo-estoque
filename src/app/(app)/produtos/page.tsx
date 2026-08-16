@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { carregarContexto, listarProdutos } from '@/lib/dados'
 import { moeda, quantidade } from '@/lib/formato'
 import { FormProduto } from './form'
@@ -10,11 +11,18 @@ export default async function Produtos() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold">Produtos</h1>
-        <p className="mt-1 text-sm text-tinta-fraca">
-          O custo médio é calculado sozinho a cada entrada. Não se digita aqui.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold">Produtos</h1>
+          <p className="mt-1 text-sm text-tinta-fraca">
+            O custo médio é calculado sozinho a cada entrada. Não se digita aqui.
+          </p>
+        </div>
+        {contexto.podeOperar && (
+          <Link href="/produtos/importar" className="botao-neutro">
+            Importar planilha
+          </Link>
+        )}
       </div>
 
       {contexto.podeOperar && <FormProduto />}
