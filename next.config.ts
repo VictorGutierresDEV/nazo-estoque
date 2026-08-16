@@ -1,7 +1,11 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  // Sem isto o Turbopack sobe a árvore procurando lockfile e acha o
+  // package-lock.json de C:\Users\victo, fora do repositório.
+  turbopack: {
+    root: __dirname,
+  },
+}
 
-export default nextConfig;
+export default nextConfig
