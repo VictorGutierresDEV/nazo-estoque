@@ -26,8 +26,16 @@ begin
   v_transito  := public.estoque_local(v_uni, 'TRANSITO', v_setor);
   v_pulmao    := public.estoque_local(v_uni, 'PULMAO', v_setor);
 
-  select item_id into v_item from public.estoque_saldos_locais
-   where local_id = v_principal and quantidade >= 30 order by quantidade desc limit 1;
+  select id into v_item from public.estoque_itens
+   where unidade_id = v_uni and ativo order by nome limit 1;
+
+  -- Depois da reinicializacao o razao nasce vazio, entao o proprio teste cria
+  -- o saldo de partida pelo inventario de implantacao -- e assim tambem
+  -- exercita esse fluxo.
+  perform public.estoque_lancar_inventario_implantacao(
+    v_uni,
+    jsonb_build_array(jsonb_build_object('item_id', v_item, 'quantidade', 570)),
+    current_date, 'teste automatizado');
 
   v_p0 := public.estoque_saldo_em(v_principal, v_item);
   v_rel := v_rel || format('contexto: item com %s no principal%s', v_p0, E'\n');

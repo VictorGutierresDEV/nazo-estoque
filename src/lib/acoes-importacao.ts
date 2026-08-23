@@ -3,7 +3,7 @@
 import ExcelJS from 'exceljs'
 import { revalidatePath } from 'next/cache'
 import { criarClienteServidor } from '@/lib/supabase/server'
-import { carregarContexto } from '@/lib/dados'
+import { carregarContexto, pode } from '@/lib/estoque'
 import {
   detectarColunas,
   normalizar,
@@ -11,7 +11,15 @@ import {
   type ProdutoImportado,
 } from '@/lib/importacao'
 
-/** exceljs devolve objeto em célula com fórmula, link ou texto rico. */
+/**
+ * Importação do CATÁLOGO de itens.
+ *
+ * Só cadastro: nome, categoria, unidade de contagem, código de barras. Saldo
+ * NÃO entra por aqui — a origem de saldo é o inventário de implantação, e
+ * depois disso só movimentação. Colunas de quantidade e custo na planilha são
+ * lidas e ignoradas de propósito.
+ */
+
 function valorSimples(valor: unknown): string | number | null {
   if (valor === null || valor === undefined) return null
   if (typeof valor === 'string' || typeof valor === 'number') return valor
@@ -45,10 +53,10 @@ export async function analisarPlanilha(
   _anterior: RespostaAnalise | null,
   dados: FormData,
 ): Promise<RespostaAnalise> {
-  const contexto = await carregarContexto()
-  if (!contexto) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }
-  if (!contexto.podeOperar)
-    return { ok: false, erro: 'Seu perfil não cadastra produtos.' }
+  const ctx = await carregarContexto()
+  if (!ctx) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }
+  if (!pode(ctx, 'cadastro.gerenciar'))
+    return { ok: false, erro: 'Seu perfil não cadastra itens.' }
 
   const arquivo = dados.get('arquivo')
   if (!(arquivo instanceof File) || arquivo.size === 0)
@@ -66,9 +74,6 @@ export async function analisarPlanilha(
       const { Readable } = await import('node:stream')
       await wb.csv.read(Readable.from(buffer.toString('utf8')))
     } else {
-      // exceljs declara o parâmetro com uma versão de Buffer diferente da que
-      // o @types/node atual expõe. É o mesmo objeto em runtime, então tipamos
-      // pela própria assinatura em vez de cravar um cast largo.
       type CargaXlsx = Parameters<typeof wb.xlsx.load>[0]
       await wb.xlsx.load(buffer as unknown as CargaXlsx)
     }
@@ -92,7 +97,7 @@ export async function analisarPlanilha(
   if (grade.length < 2)
     return {
       ok: false,
-      erro: 'A planilha precisa de uma linha de cabeçalho e ao menos um produto.',
+      erro: 'A planilha precisa de uma linha de cabeçalho e ao menos um item.',
     }
 
   const [cabecalhoBruto, ...linhas] = grade
@@ -103,7 +108,7 @@ export async function analisarPlanilha(
     return {
       ok: false,
       erro:
-        'Não achei a coluna com o nome do produto. Renomeie o cabeçalho para "Produto" ou "Nome", ou ajuste o vínculo na tela.',
+        'Não achei a coluna com o nome do item. Renomeie o cabeçalho para "Produto" ou "Item", ou ajuste o vínculo na tela.',
     }
 
   const { produtos, problemas } = normalizar(linhas, mapa)
@@ -120,108 +125,50 @@ export async function analisarPlanilha(
 }
 
 export type RespostaImportacao =
-  | { ok: true; criados: number; atualizados: number; comSaldo: number; pulados: number }
+  | { ok: true; criados: number; atualizados: number }
   | { ok: false; erro: string }
 
 /**
- * Grava os produtos.
- *
- * Reimportar a mesma planilha é seguro: o produto é casado por (unidade, nome)
- * e apenas atualizado. O saldo inicial só entra para produto que ainda não tem
- * NENHUM movimento — sem essa trava, reimportar dobraria o estoque, que é o
- * tipo de erro silencioso que destrói a confiança no número.
+ * Grava o catálogo. Reimportar é seguro: o item é casado por (unidade, nome) e
+ * apenas atualizado.
  */
-export async function importarProdutos(
-  produtos: ProdutoImportado[],
-  registrarSaldo: boolean,
+export async function importarItens(
+  itens: ProdutoImportado[],
 ): Promise<RespostaImportacao> {
-  const contexto = await carregarContexto()
-  if (!contexto) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }
-  if (!contexto.podeOperar)
-    return { ok: false, erro: 'Seu perfil não cadastra produtos.' }
-  if (!produtos.length) return { ok: false, erro: 'Nada para importar.' }
+  const ctx = await carregarContexto()
+  if (!ctx) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }
+  if (!pode(ctx, 'cadastro.gerenciar'))
+    return { ok: false, erro: 'Seu perfil não cadastra itens.' }
+  if (!itens.length) return { ok: false, erro: 'Nada para importar.' }
 
   const supabase = await criarClienteServidor()
 
   const { data: existentes } = await supabase
-    .from('estoque_produtos')
-    .select('id, nome')
-    .eq('unidade_id', contexto.unidadeId)
+    .from('estoque_itens')
+    .select('nome')
+    .eq('unidade_id', ctx.unidadeId)
 
   const jaExistia = new Set((existentes ?? []).map((p) => p.nome))
 
-  const { data: gravados, error } = await supabase
-    .from('estoque_produtos')
-    .upsert(
-      produtos.map((p) => ({
-        unidade_id: contexto.unidadeId,
-        nome: p.nome,
-        categoria: p.categoria,
-        unidade_medida: p.unidade_medida,
-        estoque_minimo: p.estoque_minimo,
-        ean: p.ean,
-        ativo: true,
-      })),
-      { onConflict: 'unidade_id,nome' },
-    )
-    .select('id, nome')
+  const { error } = await supabase.from('estoque_itens').upsert(
+    itens.map((p) => ({
+      unidade_id: ctx.unidadeId,
+      nome: p.nome,
+      categoria: p.categoria,
+      unidade_contagem: p.unidade_medida,
+      ean: p.ean,
+      ativo: true,
+    })),
+    { onConflict: 'unidade_id,nome' },
+  )
 
   if (error) return { ok: false, erro: error.message }
 
-  const idPorNome = new Map((gravados ?? []).map((p) => [p.nome, p.id]))
-  const atualizados = produtos.filter((p) => jaExistia.has(p.nome)).length
-  const criados = produtos.length - atualizados
+  const atualizados = itens.filter((p) => jaExistia.has(p.nome)).length
 
-  let comSaldo = 0
-  let pulados = 0
+  revalidatePath('/itens')
+  revalidatePath('/implantacao')
+  revalidatePath('/minimos')
 
-  if (registrarSaldo) {
-    const candidatos = produtos.filter(
-      (p) => p.saldo_inicial > 0 && idPorNome.has(p.nome),
-    )
-
-    if (candidatos.length) {
-      const ids = candidatos.map((p) => idPorNome.get(p.nome)!)
-
-      const { data: comMovimento } = await supabase
-        .from('estoque_lancamentos')
-        .select('produto_id')
-        .eq('unidade_id', contexto.unidadeId)
-        .in('produto_id', ids)
-
-      const bloqueados = new Set((comMovimento ?? []).map((l) => l.produto_id))
-
-      const itens = candidatos
-        .filter((p) => !bloqueados.has(idPorNome.get(p.nome)!))
-        .map((p) => ({
-          produto_id: idPorNome.get(p.nome)!,
-          quantidade: p.saldo_inicial,
-          custo_unitario: p.custo_unitario,
-        }))
-
-      pulados = candidatos.length - itens.length
-
-      if (itens.length) {
-        const { error: erroEntrada } = await supabase.rpc(
-          'estoque_registrar_entrada',
-          {
-            p_unidade_id: contexto.unidadeId,
-            p_itens: itens,
-            p_fornecedor: 'Saldo inicial',
-            p_documento: 'Importação de planilha',
-            p_observacao: 'Abertura de estoque via importação',
-          },
-        )
-        if (erroEntrada) return { ok: false, erro: erroEntrada.message }
-        comSaldo = itens.length
-      }
-    }
-  }
-
-  revalidatePath('/')
-  revalidatePath('/produtos')
-  revalidatePath('/entrada')
-  revalidatePath('/saida')
-
-  return { ok: true, criados, atualizados, comSaldo, pulados }
+  return { ok: true, criados: itens.length - atualizados, atualizados }
 }
