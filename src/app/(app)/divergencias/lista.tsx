@@ -23,10 +23,26 @@ type Causa = {
   fluxo_destino: string | null
 }
 
-const DESTINO_LEGIVEL: Record<string, string> = {
-  APURACAO_CORRECAO_REGISTRO: 'volta ao Estoque Principal',
-  APURACAO_RECEBIMENTO_COMPLEMENTAR: 'entra no pulmão',
-  APURACAO_PERDA_TRANSITO: 'sai do sistema como perda',
+/**
+ * O destino de cada causa, dito em voz alta.
+ *
+ * A regra é do banco: só ERRO_SEPARACAO devolve ao Principal, porque é a única
+ * causa que comprova que a mercadoria nunca saiu. Aqui isso deixa de ser texto
+ * escondido e passa a ser o que se lê antes de escolher.
+ */
+const DESTINO: Record<string, { texto: string; cor: string }> = {
+  APURACAO_CORRECAO_REGISTRO: {
+    texto: 'volta ao Estoque Principal',
+    cor: 'text-positivo',
+  },
+  APURACAO_RECEBIMENTO_COMPLEMENTAR: {
+    texto: 'entra no pulmão',
+    cor: 'text-tinta-fraca',
+  },
+  APURACAO_PERDA_TRANSITO: {
+    texto: 'sai do sistema como perda',
+    cor: 'text-acento',
+  },
 }
 
 export function ListaDivergencias({
@@ -58,12 +74,8 @@ export function ListaDivergencias({
   )
 
   function idade(iso: string) {
-    const dias = Math.floor(
-      (Date.now() - new Date(iso).getTime()) / 86_400_000,
-    )
-    if (dias === 0) return 'hoje'
-    if (dias === 1) return '1 dia'
-    return `${dias} dias`
+    const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+    return d === 0 ? 'hoje' : d === 1 ? '1 dia' : `${d} dias`
   }
 
   if (!pendentes.length) {
@@ -81,86 +93,120 @@ export function ListaDivergencias({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {pendentes.map((d) => {
         const disponiveis = causas.filter((c) => c.aplica_a === d.origem)
-        const causaEscolhida = disponiveis.find(
-          (c) => c.codigo === escolha[d.id],
-        )
-        const precisaMotivo = causaEscolhida?.exige_motivo ?? false
-        const motivoOk = !precisaMotivo || (motivo[d.id]?.trim().length ?? 0) > 0
+        const escolhida = disponiveis.find((c) => c.codigo === escolha[d.id])
+        const precisaMotivo = escolhida?.exige_motivo ?? false
+        const motivoOk =
+          !precisaMotivo || (motivo[d.id]?.trim().length ?? 0) > 0
+        const destino = escolhida?.fluxo_destino
+          ? DESTINO[escolhida.fluxo_destino]
+          : null
 
         return (
-          <section key={d.id} className="cartao space-y-3 p-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <div>
+          <section key={d.id} className="cartao overflow-hidden">
+            {/* o fato */}
+            <div className="flex items-start justify-between gap-4 border-b border-borda p-4">
+              <div className="min-w-0">
                 <span
-                  className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                  className={`inline-block rounded px-2 py-1 text-[11px] font-bold tracking-wide ${
                     d.origem === 'TRANSITO'
-                      ? 'bg-alerta/15 text-alerta'
+                      ? 'bg-alerta/10 text-alerta'
                       : 'bg-acento-fraco text-acento'
                   }`}
                 >
                   {d.origem === 'TRANSITO'
-                    ? 'resíduo em trânsito'
-                    : 'contagem acima do esperado'}
+                    ? `RESÍDUO EM TRÂNSITO · ${idade(d.criada_em)}`
+                    : `CONTAGEM ACIMA · ${idade(d.criada_em)}`}
                 </span>
-                <p className="mt-1.5 font-medium">
+                <h2 className="mt-2 text-lg font-bold leading-snug">
                   {nomeItem.get(d.item_id) ?? d.item_id}
-                </p>
-                <p className="text-sm text-tinta-fraca">
+                </h2>
+                <p className="mt-0.5 text-sm text-tinta-fraca">
                   {nomeSetor.get(d.setor_id) ?? '—'} ·{' '}
-                  <strong className="text-tinta">
-                    {fmt(Number(d.quantidade))}
-                  </strong>
+                  {dataHora(d.criada_em)}
                 </p>
               </div>
-              <div className="text-right text-xs text-tinta-fraca">
-                <p>{dataHora(d.criada_em)}</p>
-                <p className="font-semibold text-alerta">
-                  pendente há {idade(d.criada_em)}
+              <div className="shrink-0 text-right">
+                <p className="text-3xl font-bold leading-none tabular-nums text-alerta">
+                  {fmt(Number(d.quantidade))}
                 </p>
               </div>
             </div>
 
             {d.origem === 'CONTAGEM_ACIMA' && (
-              <p className="rounded-lg bg-acento-fraco px-3 py-2 text-xs text-acento">
+              <p className="border-b border-borda bg-acento-fraco px-4 py-2.5 text-xs leading-relaxed text-acento">
                 Contagem acima do esperado não cria estoque: apurar aqui apenas
                 registra a causa. O saldo do pulmão continua o do razão.
               </p>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="rotulo" htmlFor={`causa-${d.id}`}>
-                  Causa
-                </label>
-                <select
-                  id={`causa-${d.id}`}
-                  className="campo"
-                  value={escolha[d.id] ?? ''}
-                  onChange={(e) =>
-                    setEscolha((s) => ({ ...s, [d.id]: e.target.value }))
-                  }
-                  disabled={!podeApurar}
-                >
-                  <option value="">Escolha…</option>
-                  {disponiveis.map((c) => (
-                    <option key={c.codigo} value={c.codigo}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-                {causaEscolhida?.fluxo_destino && (
-                  <p className="mt-1.5 text-xs text-tinta-fraca">
-                    Destino: {DESTINO_LEGIVEL[causaEscolhida.fluxo_destino]}
-                  </p>
-                )}
-              </div>
+            <div className="space-y-2 p-4">
+              <p className="text-sm font-semibold">
+                O que aconteceu com {fmt(Number(d.quantidade))}?
+              </p>
+              <p className="pb-1 text-xs text-tinta-fraca">
+                A causa decide para onde o saldo vai
+              </p>
 
-              <div>
+              {disponiveis.map((c) => {
+                const marcada = escolha[d.id] === c.codigo
+                const dest = c.fluxo_destino ? DESTINO[c.fluxo_destino] : null
+                return (
+                  <button
+                    key={c.codigo}
+                    type="button"
+                    disabled={!podeApurar}
+                    onClick={() =>
+                      setEscolha((s) => ({ ...s, [d.id]: c.codigo }))
+                    }
+                    aria-pressed={marcada}
+                    className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition disabled:opacity-50 ${
+                      marcada
+                        ? 'border-2 border-acento bg-acento-fraco/40'
+                        : 'border-borda bg-cartao hover:border-acento'
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                        marcada
+                          ? 'bg-acento text-white'
+                          : 'border-2 border-borda'
+                      }`}
+                    >
+                      {marcada ? '✓' : ''}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[15px] font-semibold leading-snug">
+                        {c.nome}
+                      </span>
+                      {dest && (
+                        <span
+                          className={`mt-1 block text-[13px] font-medium ${dest.cor}`}
+                        >
+                          → {dest.texto}
+                        </span>
+                      )}
+                      {c.codigo === 'ERRO_SEPARACAO' && (
+                        <span className="mt-1 block text-xs leading-relaxed text-tinta-fraca">
+                          A mercadoria nunca saiu da sala, então isto corrige o
+                          registro — não é reentrada.
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                )
+              })}
+
+              <div className="pt-1">
                 <label className="rotulo" htmlFor={`motivo-${d.id}`}>
-                  Motivo {precisaMotivo && <span className="text-acento">*</span>}
+                  Motivo{' '}
+                  {precisaMotivo && (
+                    <span className="font-semibold text-acento">
+                      obrigatório
+                    </span>
+                  )}
                 </label>
                 <input
                   id={`motivo-${d.id}`}
@@ -172,28 +218,32 @@ export function ListaDivergencias({
                   disabled={!podeApurar}
                 />
               </div>
-            </div>
 
-            <button
-              type="button"
-              className="botao"
-              disabled={ocupado || !podeApurar || !escolha[d.id] || !motivoOk}
-              onClick={() =>
-                iniciar(async () => {
-                  const r = await apurarDivergencia(
-                    d.id,
-                    escolha[d.id],
-                    motivo[d.id],
-                  )
-                  if (r.ok) {
-                    setMsg({ ok: true, texto: 'Divergência apurada.' })
-                    router.refresh()
-                  } else setMsg({ ok: false, texto: r.erro })
-                })
-              }
-            >
-              {podeApurar ? 'Apurar' : 'Sem permissão para apurar'}
-            </button>
+              <button
+                type="button"
+                className="botao mt-1 w-full"
+                disabled={ocupado || !podeApurar || !escolha[d.id] || !motivoOk}
+                onClick={() =>
+                  iniciar(async () => {
+                    const r = await apurarDivergencia(
+                      d.id,
+                      escolha[d.id],
+                      motivo[d.id],
+                    )
+                    if (r.ok) {
+                      setMsg({ ok: true, texto: 'Divergência apurada.' })
+                      router.refresh()
+                    } else setMsg({ ok: false, texto: r.erro })
+                  })
+                }
+              >
+                {!podeApurar
+                  ? 'Sem permissão para apurar'
+                  : destino
+                    ? `Apurar — ${destino.texto}`
+                    : 'Apurar'}
+              </button>
+            </div>
           </section>
         )
       })}

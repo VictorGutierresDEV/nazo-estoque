@@ -2,71 +2,23 @@ import Link from 'next/link'
 import {
   CICLO_HOJE,
   carregarContexto,
-  carregarSaldos,
-  contagemDoCiclo,
-  divergenciasPendentes,
   estadoDaImplantacao,
-  listarItens,
-  listarLocais,
-  listarSetores,
-  minimosDaCasa,
   pode,
-  rodadaDoCiclo,
 } from '@/lib/estoque'
+import { montarPainel, type EstadoSetor, type Tarefa } from '@/lib/painel'
 import { quantidade as fmt } from '@/lib/formato'
 
-const SITUACAO: Record<string, string> = {
-  SUGERIDA: 'sugestão pronta',
-  SEPARADA: 'aguardando o líder',
-  RECEBIDA: 'concluída',
-}
+const TOM = {
+  alerta: 'text-alerta bg-alerta/10',
+  acento: 'text-acento bg-acento-fraco',
+  neutro: 'text-tinta-fraca bg-borda/60',
+} as const
 
 export default async function Painel() {
   const ctx = await carregarContexto()
   if (!ctx) return null
 
-  const ciclo = CICLO_HOJE()
-  const [setores, itens, locais, saldos, pendentes, minCasa, implantacao] =
-    await Promise.all([
-      listarSetores(ctx.unidadeId),
-      listarItens(ctx.unidadeId),
-      listarLocais(ctx.unidadeId),
-      carregarSaldos(ctx.unidadeId),
-      divergenciasPendentes(ctx.unidadeId),
-      minimosDaCasa(ctx.unidadeId),
-      estadoDaImplantacao(ctx.unidadeId),
-    ])
-
-  // Estado do ciclo de hoje, setor por setor.
-  const estados = await Promise.all(
-    setores.map(async (s) => {
-      const [c, r] = await Promise.all([
-        contagemDoCiclo(ctx.unidadeId, s.id, ciclo),
-        rodadaDoCiclo(ctx.unidadeId, s.id, ciclo),
-      ])
-      return {
-        setor: s,
-        contagem: c.contagem?.situacao ?? null,
-        rodada: r.rodada?.situacao ?? null,
-      }
-    }),
-  )
-
-  const principal = locais.find((l) => l.tipo === 'PRINCIPAL')
-  const noPrincipal = principal ? (saldos[principal.id] ?? {}) : {}
-  const emTransito = locais
-    .filter((l) => l.tipo === 'TRANSITO')
-    .flatMap((l) => Object.values(saldos[l.id] ?? {}))
-    .reduce((a, b) => a + b, 0)
-
-  const abaixoDoMinimoDaCasa = itens.filter((i) => {
-    const min = minCasa[i.id]
-    if (!min) return false
-    const total = Object.values(locais)
-      .map((l) => saldos[l.id]?.[i.id] ?? 0)
-      .reduce((a, b) => a + b, 0)
-    return total < min
-  })
+  const implantacao = await estadoDaImplantacao(ctx.unidadeId)
 
   if (implantacao.itensLancados === 0) {
     return (
@@ -90,115 +42,218 @@ export default async function Painel() {
     )
   }
 
+  const ciclo = CICLO_HOJE()
+  const p = await montarPainel(ctx, ciclo)
+
+  const acionaveis = p.tarefas.filter((t) => t.acao)
+  const emOrdem = p.estados.filter(
+    (e) => e.rodada === 'RECEBIDA' || (e.contagem === 'FINALIZADA' && e.rodada === 'AUSENTE'),
+  )
+
   return (
-    <div className="space-y-6">
-      <section className="grid gap-3 sm:grid-cols-3">
-        <div className="cartao p-4">
-          <p className="text-sm text-tinta-fraca">Itens no Estoque Principal</p>
-          <p className="mt-1 text-2xl font-bold">
-            {Object.values(noPrincipal).filter((q) => q > 0).length}
-          </p>
+    <div className="lg:grid lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:gap-6">
+      {/* ------------------------------ fila ------------------------------ */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-xl font-bold tracking-tight">
+            O que fazer agora
+          </h1>
+          <span className="text-sm text-tinta-fraca">
+            {acionaveis.length === 0
+              ? 'nada pendente'
+              : `${acionaveis.length} pendência${acionaveis.length > 1 ? 's' : ''}`}
+          </span>
         </div>
-        <div className="cartao p-4">
-          <p className="text-sm text-tinta-fraca">Divergências pendentes</p>
-          <p
-            className={`mt-1 text-2xl font-bold ${
-              pendentes.length ? 'text-alerta' : ''
-            }`}
-          >
-            {pendentes.length}
-          </p>
-        </div>
-        <div className="cartao p-4">
-          <p className="text-sm text-tinta-fraca">Em trânsito agora</p>
-          <p className={`mt-1 text-2xl font-bold ${emTransito ? 'text-alerta' : ''}`}>
-            {fmt(emTransito)}
-          </p>
-        </div>
-      </section>
 
-      <section className="cartao overflow-hidden">
-        <h2 className="border-b border-borda px-4 py-3 text-sm font-semibold">
-          Ciclo de hoje ({ciclo})
-        </h2>
-        <ul className="divide-y divide-borda">
-          {estados.map((e) => (
-            <li
-              key={e.setor.id}
-              className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
+        {p.tarefas.length === 0 ? (
+          <div className="cartao p-6">
+            <p className="text-base font-semibold text-positivo">
+              Ciclo de hoje em ordem
+            </p>
+            <p className="mt-1.5 text-sm text-tinta-fraca">
+              Todos os setores contados e abastecidos, nenhuma divergência
+              aberta.
+            </p>
+          </div>
+        ) : (
+          p.tarefas.map((t) => <CartaoTarefa key={t.id} tarefa={t} />)
+        )}
+
+        {/* atalhos de consulta, fora do caminho */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {[
+            ['/itens', 'Itens'],
+            ['/minimos', 'Mínimos'],
+            ['/extrato', 'Extrato'],
+          ].map(([href, rotulo]) => (
+            <Link
+              key={href}
+              href={href}
+              className="rounded-lg border border-borda bg-cartao px-3 py-2 text-sm text-tinta-fraca transition hover:border-acento hover:text-tinta"
             >
-              <span className="font-medium">{e.setor.nome}</span>
-              <span className="flex flex-wrap items-center gap-2 text-xs">
-                <span
-                  className={`rounded px-2 py-0.5 font-semibold ${
-                    e.contagem === 'FINALIZADA'
-                      ? 'bg-positivo/15 text-positivo'
-                      : e.contagem
-                        ? 'bg-alerta/15 text-alerta'
-                        : 'bg-borda text-tinta-fraca'
-                  }`}
-                >
-                  {e.contagem === 'FINALIZADA'
-                    ? 'contado'
-                    : e.contagem
-                      ? 'contagem aberta'
-                      : 'sem contagem'}
-                </span>
-                {e.rodada && (
-                  <span className="rounded bg-acento-fraco px-2 py-0.5 font-semibold text-acento">
-                    {SITUACAO[e.rodada] ?? e.rodada}
-                  </span>
-                )}
-              </span>
-            </li>
+              {rotulo}
+            </Link>
           ))}
-        </ul>
-        <div className="flex flex-wrap gap-3 border-t border-borda px-4 py-3">
-          <Link href="/contagem" className="botao-neutro">
-            Contar pulmão
-          </Link>
-          <Link href="/abastecimento" className="botao-neutro">
-            Abastecimento
-          </Link>
         </div>
       </section>
 
-      {abaixoDoMinimoDaCasa.length > 0 && (
-        <section className="cartao overflow-hidden">
-          <h2 className="border-b border-borda px-4 py-3 text-sm font-semibold text-alerta">
-            Abaixo do mínimo da casa ({abaixoDoMinimoDaCasa.length})
-          </h2>
-          <p className="border-b border-borda px-4 py-2 text-xs text-tinta-fraca">
-            Soma de todas as camadas com saldo. Serve à decisão de pedido, não ao
-            abastecimento do pulmão.
-          </p>
-          <ul className="max-h-72 divide-y divide-borda overflow-auto text-sm">
-            {abaixoDoMinimoDaCasa.map((i) => {
-              const total = locais
-                .map((l) => saldos[l.id]?.[i.id] ?? 0)
-                .reduce((a, b) => a + b, 0)
-              return (
-                <li key={i.id} className="flex justify-between gap-3 px-4 py-2">
-                  <span className="min-w-0 truncate">
-                    {i.nome}
-                    {i.critico && (
-                      <span className="ml-2 rounded bg-acento-fraco px-1.5 py-0.5 text-[10px] font-semibold text-acento">
-                        crítico
-                      </span>
-                    )}
-                  </span>
-                  <span className="shrink-0 tabular-nums">
-                    <strong>{fmt(total)}</strong>
-                    <span className="text-tinta-fraca">
-                      {' '}/ {fmt(minCasa[i.id])} {i.unidade_contagem}
-                    </span>
-                  </span>
-                </li>
-              )
-            })}
+      {/* --------------------------- ciclo do dia --------------------------- */}
+      <section className="mt-8 space-y-3 lg:mt-0">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Numero rotulo="Pulmões abastecidos" valor={`${p.abastecidos}`} de={`${p.totalSetores}`} />
+          <Numero
+            rotulo="Em trânsito agora"
+            valor={fmt(p.emTransito)}
+            alerta={p.emTransito > 0}
+          />
+          <Numero
+            rotulo="Divergências"
+            valor={`${p.divergencias}`}
+            alerta={p.divergencias > 0}
+          />
+          <Numero rotulo="Itens no Principal" valor={`${p.itensNoPrincipal}`} />
+        </div>
+
+        <div className="cartao overflow-hidden">
+          <div className="flex items-baseline justify-between border-b border-borda px-4 py-3">
+            <h2 className="text-sm font-semibold">Ciclo do dia</h2>
+            <span className="text-xs text-tinta-fraca">{ciclo}</span>
+          </div>
+          <ul className="divide-y divide-borda">
+            {p.estados.map((e) => (
+              <LinhaSetor key={e.setor.id} estado={e} />
+            ))}
           </ul>
-        </section>
+        </div>
+
+        {emOrdem.length > 0 && (
+          <p className="px-1 text-xs text-tinta-fraca lg:hidden">
+            Em ordem: {emOrdem.map((e) => e.setor.nome).join(', ')}
+          </p>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function CartaoTarefa({ tarefa }: { tarefa: Tarefa }) {
+  const informativa = !tarefa.acao
+  return (
+    <div
+      className={`cartao p-4 ${informativa ? 'opacity-70' : ''} ${
+        tarefa.prioridade === 0 ? 'border-l-[3px] border-l-alerta' : ''
+      }`}
+    >
+      {tarefa.etiqueta && (
+        <span
+          className={`inline-block rounded px-2 py-1 text-[11px] font-bold tracking-wide ${TOM[tarefa.tom]}`}
+        >
+          {tarefa.etiqueta}
+        </span>
+      )}
+      <h3
+        className={`mt-2 font-semibold leading-snug ${
+          informativa ? 'text-base' : 'text-[17px]'
+        }`}
+      >
+        {tarefa.titulo}
+      </h3>
+      <p className="mt-1 text-sm leading-relaxed text-tinta-fraca">
+        {tarefa.detalhe}
+      </p>
+      {tarefa.acao && (
+        <Link
+          href={tarefa.acao.href}
+          className="botao mt-3 w-full sm:w-auto sm:min-w-48"
+        >
+          {tarefa.acao.rotulo}
+        </Link>
       )}
     </div>
+  )
+}
+
+function Numero({
+  rotulo,
+  valor,
+  de,
+  alerta,
+}: {
+  rotulo: string
+  valor: string
+  de?: string
+  alerta?: boolean
+}) {
+  return (
+    <div className="cartao px-4 py-3">
+      <p className="text-xs text-tinta-fraca">{rotulo}</p>
+      <p
+        className={`mt-1 text-2xl font-bold tabular-nums leading-none ${
+          alerta ? 'text-alerta' : ''
+        }`}
+      >
+        {valor}
+        {de && (
+          <span className="text-base font-medium text-tinta-fraca"> / {de}</span>
+        )}
+      </p>
+    </div>
+  )
+}
+
+/** Trilha Contar → Separar → Receber, do jeito que a operação enxerga. */
+function LinhaSetor({ estado }: { estado: EstadoSetor }) {
+  const contou = estado.contagem === 'FINALIZADA'
+  const separou = estado.rodada === 'SEPARADA' || estado.rodada === 'RECEBIDA'
+  const recebeu = estado.rodada === 'RECEBIDA'
+
+  const situacao = recebeu
+    ? { texto: 'completo', cor: 'text-positivo' }
+    : separou
+      ? { texto: 'em trânsito', cor: 'text-acento' }
+      : estado.rodada === 'SUGERIDA'
+        ? { texto: 'separar', cor: 'text-acento' }
+        : contou
+          ? { texto: 'gerar sugestão', cor: 'text-acento' }
+          : { texto: 'falta contar', cor: 'text-alerta' }
+
+  return (
+    <li className="flex items-center gap-3 px-4 py-3">
+      <span className="w-20 shrink-0 text-sm font-semibold">
+        {estado.setor.nome}
+      </span>
+      <span className="flex shrink-0 items-center">
+        <Passo feito={contou} n={1} />
+        <Liga feito={contou} />
+        <Passo feito={separou} n={2} />
+        <Liga feito={separou} />
+        <Passo feito={recebeu} n={3} />
+      </span>
+      <span className={`flex-1 truncate text-xs font-medium ${situacao.cor}`}>
+        {situacao.texto}
+      </span>
+    </li>
+  )
+}
+
+function Passo({ feito, n }: { feito: boolean; n: number }) {
+  return (
+    <span
+      className={`flex size-[22px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+        feito
+          ? 'bg-positivo text-white'
+          : 'border border-borda bg-papel text-tinta-fraca'
+      }`}
+    >
+      {feito ? '✓' : n}
+    </span>
+  )
+}
+
+function Liga({ feito }: { feito: boolean }) {
+  return (
+    <span
+      className={`h-0.5 w-4 shrink-0 ${feito ? 'bg-positivo' : 'bg-borda'}`}
+    />
   )
 }
