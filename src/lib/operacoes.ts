@@ -74,6 +74,17 @@ export async function lancarInventarioImplantacao(
   })
 }
 
+export async function concluirInventarioLocal(
+  localId: string,
+): Promise<Resultado<string>> {
+  const ctx = await carregarContexto()
+  if (!ctx) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }
+  return chamar('estoque_concluir_inventario_local', {
+    p_unidade_id: ctx.unidadeId,
+    p_local_id: localId,
+  })
+}
+
 export async function marcarEmProducao(): Promise<Resultado> {
   const ctx = await carregarContexto()
   if (!ctx) return { ok: false, erro: 'Sessão expirada. Entre de novo.' }

@@ -2,11 +2,9 @@ import { redirect } from 'next/navigation'
 import {
   CICLO_HOJE,
   carregarContexto,
-  carregarSaldos,
   contagemDoCiclo,
   listarItens,
   listarLideres,
-  listarLocais,
   listarSetores,
   pode,
   podeNoSetor,
@@ -21,8 +19,7 @@ export default async function Contagem({
   if (!pode(ctx, 'pulmao.contar')) redirect('/')
 
   const params = await searchParams
-  const ciclo =
-    typeof params.ciclo === 'string' ? params.ciclo : CICLO_HOJE()
+  const ciclo = typeof params.ciclo === 'string' ? params.ciclo : CICLO_HOJE()
 
   const setores = (await listarSetores(ctx.unidadeId)).filter((s) =>
     podeNoSetor(ctx, s.id, 'pulmao.contar'),
@@ -47,26 +44,21 @@ export default async function Contagem({
       ? params.setor
       : setores[0].id
 
-  const [itens, locais, saldos, atual, lideres] = await Promise.all([
+  // O saldo do pulmão NÃO é carregado aqui de propósito: a contagem é cega.
+  // Enviar o esperado para o navegador seria vazá-lo, mesmo sem exibir na tela.
+  const [itens, atual, lideres] = await Promise.all([
     listarItens(ctx.unidadeId),
-    listarLocais(ctx.unidadeId),
-    carregarSaldos(ctx.unidadeId),
     contagemDoCiclo(ctx.unidadeId, setorId, ciclo),
     listarLideres(ctx.unidadeId, setorId),
   ])
-
-  const pulmao = locais.find(
-    (l) => l.tipo === 'PULMAO' && l.setor_id === setorId,
-  )
-  const saldoPulmao = pulmao ? (saldos[pulmao.id] ?? {}) : {}
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-bold">Contagem do pulmão</h1>
         <p className="mt-1 text-sm text-tinta-fraca">
-          Contagem <strong>diária</strong>, do saldo que restou no pulmão. Não é
-          a contagem geral da casa de terça, quinta e domingo — são processos
+          Contagem <strong>diária</strong> do saldo que restou no pulmão. Não é a
+          contagem geral da casa de terça, quinta e domingo — são processos
           distintos, e a geral segue no Checklist Fácil por enquanto.
         </p>
       </div>
@@ -76,7 +68,6 @@ export default async function Contagem({
         setores={setores}
         setorId={setorId}
         itens={itens}
-        saldoPulmao={saldoPulmao}
         contagem={atual.contagem}
         itensContados={atual.itens}
         lideres={lideres}

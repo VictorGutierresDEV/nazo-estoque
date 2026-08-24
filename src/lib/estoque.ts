@@ -198,7 +198,7 @@ export async function contagemDoCiclo(
 
   const { data: itens } = await supabase
     .from('estoque_contagem_itens')
-    .select('item_id, quantidade, lancado_em')
+    .select('item_id, quantidade, quantidade_esperada, lancado_em')
     .eq('contagem_id', contagem.id)
 
   return { contagem, itens: (itens ?? []) as ContagemItem[] }
@@ -207,6 +207,12 @@ export async function contagemDoCiclo(
 export type ContagemItem = {
   item_id: string
   quantidade: number
+  /**
+   * Saldo que o razão indicava no instante do fechamento. Nulo enquanto a
+   * contagem está em preenchimento — de propósito: a contagem é CEGA, e a tela
+   * de preenchimento não deve ter como mostrar o esperado.
+   */
+  quantidade_esperada: number | null
   lancado_em: string
 }
 
@@ -392,4 +398,14 @@ export async function listarLideres(unidadeId: string, setorId?: string) {
     nome: p.nome ?? '—',
     funcao: funcaoDe.get(p.id) ?? '',
   }))
+}
+
+/** Locais cujo inventário de implantação já foi declarado concluído. */
+export async function locaisConcluidos(unidadeId: string) {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase
+    .from('estoque_inventario_locais')
+    .select('local_id, itens_com_saldo, concluido_por, concluido_em')
+    .eq('unidade_id', unidadeId)
+  return data ?? []
 }

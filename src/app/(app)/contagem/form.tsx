@@ -22,13 +22,20 @@ type Props = {
   setores: Setor[]
   setorId: string
   itens: Item[]
-  saldoPulmao: Record<string, number>
   contagem: Contagem
   itensContados: ContagemItem[]
   lideres: { id: string; nome: string; funcao: string }[]
   podeFinalizar: boolean
 }
 
+/**
+ * Contagem CEGA.
+ *
+ * Durante o preenchimento a tela não mostra — e o servidor não envia — o saldo
+ * que o sistema espera encontrar. Ver o esperado enviesa: a tendência é repetir
+ * o número em vez de contar. O confronto Contado x Esperado x Diferença aparece
+ * só depois da finalização, quando já não pode influenciar a contagem.
+ */
 export function FormContagem(p: Props) {
   const router = useRouter()
   const [busca, setBusca] = useState('')
@@ -38,31 +45,19 @@ export function FormContagem(p: Props) {
   const [ocupado, iniciar] = useTransition()
 
   const contados = useMemo(
-    () => Object.fromEntries(p.itensContados.map((i) => [i.item_id, Number(i.quantidade)])),
+    () =>
+      Object.fromEntries(
+        p.itensContados.map((i) => [i.item_id, Number(i.quantidade)]),
+      ),
     [p.itensContados],
   )
 
   const finalizada = p.contagem?.situacao === 'FINALIZADA'
 
-  // Item com saldo no pulmão é obrigatório: zerar por omissão inventaria uma
-  // saída que ninguém contou. O banco recusa, então avisamos antes.
-  const comSaldo = Object.entries(p.saldoPulmao)
-    .filter(([, q]) => q > 0)
-    .map(([id]) => id)
-  const faltando = comSaldo.filter(
-    (id) => contados[id] === undefined && !(valores[id]?.trim()),
-  )
-
   const visiveis = useMemo(() => {
     const termo = busca.trim().toLowerCase()
-    const base = p.itens.filter((i) => !termo || i.nome.toLowerCase().includes(termo))
-    // Itens com saldo primeiro: são os que precisam ser contados.
-    return base.sort((a, b) => {
-      const sa = (p.saldoPulmao[a.id] ?? 0) > 0 ? 0 : 1
-      const sb = (p.saldoPulmao[b.id] ?? 0) > 0 ? 0 : 1
-      return sa - sb || a.nome.localeCompare(b.nome)
-    })
-  }, [busca, p.itens, p.saldoPulmao])
+    return p.itens.filter((i) => !termo || i.nome.toLowerCase().includes(termo))
+  }, [busca, p.itens])
 
   function trocarSetor(id: string) {
     router.push(`/contagem?setor=${id}&ciclo=${p.ciclo}`)
@@ -94,7 +89,10 @@ export function FormContagem(p: Props) {
         }
       }
       setValores({})
-      setMsg({ ok: true, texto: `${pares.length} item(ns) lançado(s).` })
+      setMsg({
+        ok: true,
+        texto: `${pares.length} item(ns) lançado(s). Corrigir antes de finalizar é permitido — a alteração fica na trilha.`,
+      })
       router.refresh()
     })
   }
@@ -104,6 +102,8 @@ export function FormContagem(p: Props) {
     iniciar(async () => {
       const r = await finalizarContagem(p.contagem!.id, lider)
       if (!r.ok) {
+        // Quando falta contar item com saldo, a mensagem do banco lista quais
+        // são — é aqui que o operador descobre, e sem ver quantidade.
         setMsg({ ok: false, texto: r.erro })
         return
       }
@@ -123,190 +123,241 @@ export function FormContagem(p: Props) {
     })
   }
 
+  const abas = (
+    <section className="cartao p-4">
+      <h2 className="rotulo">Setor</h2>
+      <div className="flex flex-wrap gap-2">
+        {p.setores.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => trocarSetor(s.id)}
+            aria-pressed={s.id === p.setorId}
+            className={`min-h-12 rounded-lg border px-4 text-base font-medium transition ${
+              s.id === p.setorId
+                ? 'border-acento bg-acento text-white'
+                : 'border-borda bg-cartao hover:border-acento'
+            }`}
+          >
+            {s.nome}
+          </button>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-tinta-fraca">
+        Ciclo de referência: <strong>{p.ciclo}</strong>
+        {p.contagem &&
+          ` · ${finalizada ? 'finalizada' : 'em preenchimento'}`}
+      </p>
+    </section>
+  )
+
+  if (finalizada) {
+    const linhas = p.itensContados
+      .map((i) => {
+        const item = p.itens.find((x) => x.id === i.item_id)
+        const contado = Number(i.quantidade)
+        const esperado =
+          i.quantidade_esperada === null ? null : Number(i.quantidade_esperada)
+        return {
+          nome: item?.nome ?? i.item_id,
+          unidade: item?.unidade_contagem ?? '',
+          contado,
+          esperado,
+          diferenca: esperado === null ? null : contado - esperado,
+        }
+      })
+      .sort(
+        (a, b) =>
+          Math.abs(b.diferenca ?? 0) - Math.abs(a.diferenca ?? 0) ||
+          a.nome.localeCompare(b.nome),
+      )
+
+    return (
+      <div className="space-y-5">
+        {abas}
+        <section className="cartao overflow-hidden">
+          <h2 className="border-b border-borda px-4 py-3 text-sm font-semibold text-positivo">
+            Contagem finalizada — confronto
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[32rem] text-sm">
+              <thead>
+                <tr className="border-b border-borda text-left text-tinta-fraca">
+                  <th className="px-4 py-2 font-medium">Item</th>
+                  <th className="px-3 py-2 text-right font-medium">Contado</th>
+                  <th className="px-3 py-2 text-right font-medium">Esperado</th>
+                  <th className="px-3 py-2 text-right font-medium">Diferença</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-borda">
+                {linhas.map((l) => (
+                  <tr key={l.nome}>
+                    <td className="px-4 py-2">
+                      {l.nome}
+                      <span className="ml-1.5 text-xs text-tinta-fraca">
+                        {l.unidade}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums font-medium">
+                      {fmt(l.contado)}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-tinta-fraca">
+                      {l.esperado === null ? '—' : fmt(l.esperado)}
+                    </td>
+                    <td
+                      className={`px-3 py-2 text-right tabular-nums ${
+                        l.diferenca === null || l.diferenca === 0
+                          ? 'text-tinta-fraca'
+                          : l.diferenca > 0
+                            ? 'font-semibold text-alerta'
+                            : ''
+                      }`}
+                    >
+                      {l.diferenca === null
+                        ? '—'
+                        : l.diferenca > 0
+                          ? `+${fmt(l.diferenca)}`
+                          : fmt(l.diferenca)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="border-t border-borda px-4 py-2 text-xs text-tinta-fraca">
+            Diferença negativa fechou o ciclo como saída operacional não
+            discriminada — é o consumo normal indo para a praça, não perda.
+            Diferença positiva abriu divergência para apuração.
+          </p>
+        </section>
+        {msg && <Aviso msg={msg} />}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
+      {abas}
+
+      <p className="rounded-lg border border-borda bg-cartao px-4 py-3 text-sm text-tinta-fraca">
+        Conte o que existe fisicamente no pulmão. A tela não mostra o que o
+        sistema espera encontrar — o confronto aparece depois de finalizar.
+      </p>
+
       <section className="cartao p-4">
-        <h2 className="rotulo">Setor</h2>
-        <div className="flex flex-wrap gap-2">
-          {p.setores.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => trocarSetor(s.id)}
-              aria-pressed={s.id === p.setorId}
-              className={`min-h-12 rounded-lg border px-4 text-base font-medium transition ${
-                s.id === p.setorId
-                  ? 'border-acento bg-acento text-white'
-                  : 'border-borda bg-cartao hover:border-acento'
-              }`}
-            >
-              {s.nome}
-            </button>
-          ))}
-        </div>
-        <p className="mt-3 text-xs text-tinta-fraca">
-          Ciclo de referência: <strong>{p.ciclo}</strong>
-          {p.contagem && ` · situação: ${finalizada ? 'finalizada' : 'em preenchimento'}`}
-        </p>
+        <label className="rotulo" htmlFor="busca">
+          Itens
+        </label>
+        <input
+          id="busca"
+          type="search"
+          className="campo"
+          placeholder="Filtrar por nome…"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+
+        <ul className="mt-3 max-h-[26rem] divide-y divide-borda overflow-auto rounded-lg border border-borda">
+          {visiveis.map((i) => {
+            const jaContado = contados[i.id]
+            return (
+              <li key={i.id} className="flex items-center gap-3 px-3 py-2.5">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">
+                    {i.nome}
+                  </span>
+                  <span className="block truncate text-xs text-tinta-fraca">
+                    {i.orientacao_contagem ?? `contar em ${i.unidade_contagem}`}
+                    {jaContado !== undefined && (
+                      <span className="text-positivo">
+                        {' · '}lançado: {fmt(jaContado)}
+                      </span>
+                    )}
+                  </span>
+                </span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="any"
+                  min="0"
+                  aria-label={`Contagem de ${i.nome}`}
+                  className="campo w-28 shrink-0"
+                  placeholder={jaContado !== undefined ? String(jaContado) : ''}
+                  value={valores[i.id] ?? ''}
+                  onChange={(e) =>
+                    setValores((v) => ({ ...v, [i.id]: e.target.value }))
+                  }
+                />
+              </li>
+            )
+          })}
+        </ul>
       </section>
 
-      {finalizada ? (
-        <section className="cartao p-4">
-          <h2 className="text-sm font-semibold text-positivo">
-            Contagem deste ciclo já finalizada
-          </h2>
-          <p className="mt-2 text-sm text-tinta-fraca">
-            O pulmão foi fechado e o abastecimento já pode ser preparado. Para
-            contar de novo, abra o ciclo seguinte.
-          </p>
-          <ul className="mt-3 divide-y divide-borda text-sm">
-            {p.itensContados.map((i) => {
-              const item = p.itens.find((x) => x.id === i.item_id)
-              return (
-                <li key={i.item_id} className="flex justify-between gap-3 py-2">
-                  <span className="truncate">{item?.nome ?? i.item_id}</span>
-                  <span className="tabular-nums text-tinta-fraca">
-                    {fmt(Number(i.quantidade))} {item?.unidade_contagem}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      ) : (
-        <>
-          <section className="cartao p-4">
-            <label className="rotulo" htmlFor="busca">
-              Itens
-            </label>
-            <input
-              id="busca"
-              type="search"
-              className="campo"
-              placeholder="Filtrar por nome…"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
+      <button
+        type="button"
+        onClick={salvar}
+        className="botao-neutro w-full"
+        disabled={ocupado || Object.values(valores).every((v) => !v.trim())}
+      >
+        {ocupado ? 'Salvando…' : 'Salvar contagem'}
+      </button>
 
-            <ul className="mt-3 max-h-[26rem] divide-y divide-borda overflow-auto rounded-lg border border-borda">
-              {visiveis.map((i) => {
-                const saldo = p.saldoPulmao[i.id] ?? 0
-                const jaContado = contados[i.id]
-                return (
-                  <li key={i.id} className="flex items-center gap-3 px-3 py-2.5">
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
-                        {i.nome}
-                        {saldo > 0 && (
-                          <span className="ml-2 rounded bg-alerta/15 px-1.5 py-0.5 text-[10px] font-semibold text-alerta">
-                            obrigatório
-                          </span>
-                        )}
-                      </span>
-                      <span className="block truncate text-xs text-tinta-fraca">
-                        {i.orientacao_contagem ?? `contar em ${i.unidade_contagem}`}
-                        {saldo > 0 && ` · sistema espera ${fmt(saldo)}`}
-                        {jaContado !== undefined && (
-                          <span className="text-positivo">
-                            {' · '}lançado: {fmt(jaContado)}
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="any"
-                      min="0"
-                      aria-label={`Contagem de ${i.nome}`}
-                      className="campo w-28 shrink-0"
-                      placeholder={jaContado !== undefined ? String(jaContado) : ''}
-                      value={valores[i.id] ?? ''}
-                      onChange={(e) =>
-                        setValores((v) => ({ ...v, [i.id]: e.target.value }))
-                      }
-                    />
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-
-          <button
-            type="button"
-            onClick={salvar}
-            className="botao-neutro w-full"
-            disabled={ocupado || Object.values(valores).every((v) => !v.trim())}
-          >
-            {ocupado ? 'Salvando…' : 'Salvar contagem'}
-          </button>
-
-          <section className="cartao space-y-3 p-4">
-            <h2 className="text-sm font-semibold">Finalizar</h2>
-            <p className="text-sm text-tinta-fraca">
-              Auxiliar pode preencher; quem <strong>valida e responde</strong>{' '}
-              pela contagem é o líder. Finalizar fecha o ciclo do pulmão.
-            </p>
-
-            {faltando.length > 0 && (
-              <p className="rounded-lg bg-alerta/10 px-3 py-2 text-sm text-alerta">
-                {faltando.length} item(ns) com saldo no pulmão ainda sem
-                contagem. Não dá para finalizar sem contá-los — omitir
-                inventaria uma saída que ninguém verificou.
-              </p>
-            )}
-
-            <div>
-              <label className="rotulo" htmlFor="lider">
-                Líder responsável
-              </label>
-              <select
-                id="lider"
-                className="campo"
-                value={lider}
-                onChange={(e) => setLider(e.target.value)}
-                disabled={!p.podeFinalizar}
-              >
-                <option value="">Escolha…</option>
-                {p.lideres.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="button"
-              onClick={finalizar}
-              className="botao w-full"
-              disabled={
-                ocupado ||
-                !p.podeFinalizar ||
-                !p.contagem ||
-                !lider ||
-                faltando.length > 0
-              }
-            >
-              {p.podeFinalizar
-                ? 'Finalizar contagem do pulmão'
-                : 'Só o líder finaliza'}
-            </button>
-          </section>
-        </>
-      )}
-
-      {msg && (
-        <p
-          className={`rounded-lg px-4 py-3 text-sm ${
-            msg.ok
-              ? 'border border-positivo/30 bg-positivo/10 text-positivo'
-              : 'border border-acento/30 bg-acento-fraco text-acento'
-          }`}
-        >
-          {msg.texto}
+      <section className="cartao space-y-3 p-4">
+        <h2 className="text-sm font-semibold">Finalizar</h2>
+        <p className="text-sm text-tinta-fraca">
+          Auxiliar pode preencher; quem <strong>valida e responde</strong> pela
+          contagem é o líder. Se faltar contar algum item que tem saldo, o
+          sistema recusa e diz quais são.
         </p>
-      )}
+
+        <div>
+          <label className="rotulo" htmlFor="lider">
+            Líder responsável
+          </label>
+          <select
+            id="lider"
+            className="campo"
+            value={lider}
+            onChange={(e) => setLider(e.target.value)}
+            disabled={!p.podeFinalizar}
+          >
+            <option value="">Escolha…</option>
+            {p.lideres.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.nome}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={finalizar}
+          className="botao w-full"
+          disabled={ocupado || !p.podeFinalizar || !p.contagem || !lider}
+        >
+          {p.podeFinalizar
+            ? 'Finalizar contagem do pulmão'
+            : 'Só o líder finaliza'}
+        </button>
+      </section>
+
+      {msg && <Aviso msg={msg} />}
     </div>
+  )
+}
+
+function Aviso({ msg }: { msg: { ok: boolean; texto: string } }) {
+  return (
+    <p
+      className={`rounded-lg px-4 py-3 text-sm ${
+        msg.ok
+          ? 'border border-positivo/30 bg-positivo/10 text-positivo'
+          : 'border border-acento/30 bg-acento-fraco text-acento'
+      }`}
+    >
+      {msg.texto}
+    </p>
   )
 }

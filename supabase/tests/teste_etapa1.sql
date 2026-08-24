@@ -12,6 +12,7 @@ declare
   v_p0 numeric; v_p1 numeric; v_t1 numeric; v_l1 numeric;
   v_n integer;
   v_ok integer := 0; v_fail integer := 0;
+  v_lider uuid;
 
 begin
   -- ---- contexto autenticado -------------------------------------------------
@@ -25,6 +26,17 @@ begin
   v_principal := public.estoque_local(v_uni, 'PRINCIPAL');
   v_transito  := public.estoque_local(v_uni, 'TRANSITO', v_setor);
   v_pulmao    := public.estoque_local(v_uni, 'PULMAO', v_setor);
+
+  -- Segunda pessoa. O fluxo exige conferencia entre quem separa e quem recebe,
+  -- entao o teste monta um lider do setor -- e reconstroi a funcao dele aqui
+  -- dentro, para nao depender de quem esta cadastrado na producao.
+  select p.id into v_lider from public.profiles p
+   where p.id <> v_uid and coalesce(p.ativo, true)
+     and coalesce(p.unidade_ativa, p.unidade_id) = v_uni
+   order by p.id limit 1;
+  delete from public.estoque_pessoa_funcoes where pessoa_id = v_lider and unidade_id = v_uni;
+  insert into public.estoque_pessoa_funcoes (pessoa_id, unidade_id, funcao_codigo, setor_id)
+  values (v_lider, v_uni, 'LIDER_SETOR', v_setor);
 
   select id into v_item from public.estoque_itens
    where unidade_id = v_uni and ativo order by nome limit 1;
@@ -91,6 +103,9 @@ begin
     v_rel := v_rel || format('T6  FALHA principal %s transito %s', v_p1, v_t1) || E'\n'; end if;
 
   -- T7 recebimento parcial: residuo fica em transito -----------------------
+  -- Troca de pessoa: quem separou nao recebe (quebra de custodia).
+  perform set_config('request.jwt.claims',
+                     json_build_object('sub', v_lider::text)::text, true);
   v_res := public.estoque_confirmar_recebimento(
     v_rod, jsonb_build_array(jsonb_build_object('item_id', v_item, 'quantidade', 12)));
   v_t1 := public.estoque_saldo_em(v_transito, v_item);
@@ -100,6 +115,10 @@ begin
     v_rel := v_rel || 'T7  ok    recebeu 12, pulmao 12, residuo 3 permanece em transito, 1 divergencia' || E'\n';
   else v_fail := v_fail + 1;
     v_rel := v_rel || format('T7  FALHA transito %s pulmao %s res %s', v_t1, v_l1, v_res::text) || E'\n'; end if;
+
+  -- Volta ao Victor: apurar divergencia exige permissao que o lider nao tem.
+  perform set_config('request.jwt.claims',
+                     json_build_object('sub', v_uid::text)::text, true);
 
   -- T8 causa errada para a origem da divergencia ---------------------------
   select id into v_div from public.estoque_divergencias
