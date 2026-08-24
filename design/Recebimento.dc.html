@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Geist, system-ui, -apple-system, sans-serif; }
+    a { color: #b4432c; text-decoration: none; }
+    a:hover { color: #8f351f; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #faf8f5; color: #1c1917; display: flex; flex-direction: column; overflow: hidden">
+
+  <div style="padding: 12px 16px; background: #ffffff; border-bottom: 1px solid #e7e2db; display: flex; align-items: center; gap: 12px">
+    <button style="width: 36px; height: 36px; border: 1px solid #e7e2db; border-radius: 8px; background: #ffffff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#57534e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5l-6 5.5 6 5.5"/></svg>
+    </button>
+    <div style="min-width: 0">
+      <div style="font-size: 15px; font-weight: 700">Receber no pulmão do Bar</div>
+      <div style="font-size: 12px; color: #78716c">separado por Mauricio às 08:14</div>
+    </div>
+  </div>
+
+  <!-- instrução de uma linha -->
+  <div style="padding: 12px 16px; background: #fdf0ec; border-bottom: 1px solid rgba(180,67,44,0.15); display: flex; gap: 9px; align-items: flex-start">
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#b4432c" stroke-width="1.9" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px"><circle cx="10" cy="10" r="7.5"/><path d="M10 6.5v.01M10 9v4.5"/></svg>
+    <span style="font-size: 14px; color: #8f351f; line-height: 1.45">Confira o que chegou. Se vier menos, toque no item e ajuste — a diferença não desaparece, fica para apuração.</span>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px">
+
+    <!-- item conferido ok -->
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 13px 14px; display: flex; align-items: center; gap: 12px">
+      <div style="width: 30px; height: 30px; border-radius: 8px; background: #15803d; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg>
+      </div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Gin Tanqueray 750ml</div>
+        <div style="font-size: 13px; color: #78716c">6 un separadas</div>
+      </div>
+      <div style="font-size: 20px; font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums">6</div>
+    </div>
+
+    <!-- item ajustado para menos: estado muito evidente -->
+    <div style="background: #ffffff; border: 2px solid #b45309; border-radius: 12px; padding: 13px 14px; box-shadow: 0 2px 8px rgba(180,83,9,0.10)">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px">
+        <div style="width: 30px; height: 30px; border-radius: 8px; background: rgba(180,83,9,0.14); display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#b45309" stroke-width="2.2" stroke-linecap="round"><path d="M6 10h8"/></svg>
+        </div>
+        <div style="flex: 1; min-width: 0">
+          <div style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Tônica Antarctica 269ml</div>
+          <div style="font-size: 13px; color: #b45309; font-weight: 500">faltaram 4 un · vai para apuração</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <button style="width: 52px; height: 48px; border: 1px solid #e7e2db; border-radius: 10px; background: #ffffff; cursor: pointer; display: flex; align-items: center; justify-content: center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#57534e" stroke-width="2.2" stroke-linecap="round"><path d="M5 10h10"/></svg>
+        </button>
+        <div style="flex: 1; text-align: center">
+          <div style="font-size: 28px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums">20</div>
+          <div style="font-size: 12px; color: #78716c; margin-top: 3px">de 24 separadas</div>
+        </div>
+        <button style="width: 52px; height: 48px; border: 1px solid #e7e2db; border-radius: 10px; background: #ffffff; cursor: pointer; display: flex; align-items: center; justify-content: center">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#57534e" stroke-width="2.2" stroke-linecap="round"><path d="M10 5v10M5 10h10"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 13px 14px; display: flex; align-items: center; gap: 12px">
+      <div style="width: 30px; height: 30px; border-radius: 8px; background: #15803d; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg>
+      </div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Xarope de açúcar 1L</div>
+        <div style="font-size: 13px; color: #78716c">3 un separadas</div>
+      </div>
+      <div style="font-size: 20px; font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums">3</div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 13px 14px; display: flex; align-items: center; gap: 12px">
+      <div style="width: 30px; height: 30px; border-radius: 8px; background: #15803d; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg>
+      </div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Limão taiti (kg)</div>
+        <div style="font-size: 13px; color: #78716c">4 kg separados</div>
+      </div>
+      <div style="font-size: 20px; font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums">4</div>
+    </div>
+
+    <div style="text-align: center; font-size: 13px; color: #78716c; padding: 4px 0">+ 3 itens conferidos</div>
+
+  </div>
+
+  <!-- confirmação -->
+  <div style="border-top: 1px solid #e7e2db; background: #ffffff; padding: 12px 16px 20px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px">
+      <span style="font-size: 14px; color: #78716c">6 itens conferidos · 1 com falta</span>
+      <span style="font-size: 14px; font-weight: 600; color: #b45309">4 un para apurar</span>
+    </div>
+    <button style="width: 100%; min-height: 56px; border: 0; border-radius: 10px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer">Confirmar recebimento</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

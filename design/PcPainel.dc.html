@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Geist, system-ui, -apple-system, sans-serif; }
+    a { color: #b4432c; text-decoration: none; }
+    a:hover { color: #8f351f; }
+    .passo { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
+             justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .liga { height: 2px; width: 22px; flex-shrink: 0; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; background: #faf8f5; color: #1c1917; display: flex; flex-direction: column; overflow: hidden">
+
+  <!-- barra superior -->
+  <div style="height: 60px; flex-shrink: 0; background: #ffffff; border-bottom: 1px solid #e7e2db; display: flex; align-items: center; justify-content: space-between; padding: 0 24px">
+    <div style="display: flex; align-items: center; gap: 26px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <div style="width: 28px; height: 28px; border-radius: 7px; background: #b4432c; display: flex; align-items: center; justify-content: center">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6.5L10 3l6.5 3.5v7L10 17l-6.5-3.5v-7z"/><path d="M3.5 6.5L10 10l6.5-3.5M10 10v7"/></svg>
+        </div>
+        <span style="font-size: 15px; font-weight: 700">Nazo Estoque</span>
+      </div>
+      <span style="font-size: 14px; color: #78716c">Nazo Asa Sul · segunda, 24 de agosto · 08:47</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #15803d; background: rgba(21,128,61,0.10); padding: 5px 10px; border-radius: 6px">
+        <span style="width: 6px; height: 6px; border-radius: 50%; background: #15803d"></span>
+        em produção
+      </span>
+      <div style="width: 1px; height: 24px; background: #e7e2db"></div>
+      <div style="display: flex; align-items: center; gap: 9px">
+        <div style="text-align: right">
+          <div style="font-size: 13px; font-weight: 600; line-height: 1.2">Victor Gutierres</div>
+          <div style="font-size: 12px; color: #78716c">Gerente de CPD</div>
+        </div>
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: #f3efe9; border: 1px solid #e7e2db; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #78716c">VG</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex: 1; display: flex; gap: 20px; padding: 20px 24px; overflow: hidden">
+
+    <!-- coluna: o que fazer agora -->
+    <div style="width: 380px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <div style="display: flex; align-items: baseline; justify-content: space-between">
+        <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">O que fazer agora</span>
+        <span style="font-size: 13px; color: #78716c">4 pendências</span>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #e7e2db; border-left: 3px solid #b45309; border-radius: 12px; padding: 15px">
+        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #b45309; background: rgba(180,83,9,0.10); padding: 4px 8px; border-radius: 6px; letter-spacing: 0.02em">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3v7l4 2"/><circle cx="10" cy="10" r="7.5"/></svg>
+          PARADO HÁ 2 DIAS
+        </span>
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.3; margin: 9px 0 4px">Apurar 3&nbsp;kg em trânsito</div>
+        <div style="font-size: 14px; color: #78716c; line-height: 1.45; margin-bottom: 12px">Camarão 51/60 · Sushi</div>
+        <button style="width: 100%; min-height: 44px; border: 0; border-radius: 8px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Apurar agora</button>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 15px">
+        <span style="font-size: 11px; font-weight: 700; color: #b4432c; background: #fdf0ec; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.02em">ATÉ AS 09:00</span>
+        <div style="font-size: 16px; font-weight: 600; line-height: 1.3; margin: 9px 0 4px">Separar reposição do Bar</div>
+        <div style="font-size: 14px; color: #78716c; line-height: 1.45; margin-bottom: 12px">7 itens sugeridos · 23 unidades</div>
+        <button style="width: 100%; min-height: 44px; border: 0; border-radius: 8px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Abrir separação</button>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 15px; opacity: 0.72">
+        <span style="font-size: 11px; font-weight: 700; color: #78716c; background: #f3efe9; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.02em">COM O JONAS</span>
+        <div style="font-size: 15px; font-weight: 600; line-height: 1.3; margin: 9px 0 4px">Sushi aguarda recebimento</div>
+        <div style="font-size: 14px; color: #78716c; line-height: 1.45">Separado por você às 08:14</div>
+      </div>
+
+      <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 15px">
+        <div style="font-size: 15px; font-weight: 600; line-height: 1.3; margin-bottom: 4px">Cozinha sem contagem</div>
+        <div style="font-size: 14px; color: #78716c; line-height: 1.45">Sem ela não há sugestão de reposição</div>
+      </div>
+
+      <div style="flex: 1"></div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <a href="#" style="font-size: 13px; color: #78716c; padding: 7px 11px; border: 1px solid #e7e2db; border-radius: 7px; background: #ffffff">Itens</a>
+        <a href="#" style="font-size: 13px; color: #78716c; padding: 7px 11px; border: 1px solid #e7e2db; border-radius: 7px; background: #ffffff">Mínimos</a>
+        <a href="#" style="font-size: 13px; color: #78716c; padding: 7px 11px; border: 1px solid #e7e2db; border-radius: 7px; background: #ffffff">Extrato e auditoria</a>
+      </div>
+    </div>
+
+    <!-- coluna: ciclo do dia -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+
+      <!-- números do dia -->
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+        <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px 16px">
+          <div style="font-size: 13px; color: #78716c; margin-bottom: 5px">Pulmões abastecidos</div>
+          <div style="font-size: 26px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums">2<span style="font-size: 16px; color: #a8a29e; font-weight: 500"> / 6</span></div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px 16px">
+          <div style="font-size: 13px; color: #78716c; margin-bottom: 5px">Em trânsito agora</div>
+          <div style="font-size: 26px; font-weight: 700; line-height: 1; color: #b45309; font-variant-numeric: tabular-nums">3<span style="font-size: 15px; font-weight: 500"> kg</span></div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px 16px">
+          <div style="font-size: 13px; color: #78716c; margin-bottom: 5px">Divergências abertas</div>
+          <div style="font-size: 26px; font-weight: 700; line-height: 1; color: #b45309; font-variant-numeric: tabular-nums">1</div>
+        </div>
+        <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px 16px">
+          <div style="font-size: 13px; color: #78716c; margin-bottom: 5px">Abaixo do mínimo da casa</div>
+          <div style="font-size: 26px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums">9</div>
+        </div>
+      </div>
+
+      <!-- tabela do ciclo -->
+      <div style="flex: 1; background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column">
+        <div style="padding: 14px 18px; border-bottom: 1px solid #e7e2db; display: flex; align-items: baseline; justify-content: space-between">
+          <span style="font-size: 16px; font-weight: 700">Ciclo do dia</span>
+          <span style="font-size: 13px; color: #b45309; font-weight: 600">alvo das 09:00 · faltam 13 min</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 150px 1fr 190px 150px; gap: 0; padding: 10px 18px; border-bottom: 1px solid #f0ece6; font-size: 12px; font-weight: 600; color: #78716c; letter-spacing: 0.02em">
+          <span>SETOR</span><span>ETAPA</span><span>SITUAÇÃO</span><span style="text-align: right">AÇÃO</span>
+        </div>
+
+        <!-- Bar: sua vez -->
+        <div style="display: grid; grid-template-columns: 150px 1fr 190px 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ece6; background: #fdf0ec">
+          <span style="font-size: 15px; font-weight: 700">Bar</span>
+          <div style="display: flex; align-items: center; gap: 0">
+            <div class="passo" style="background: #15803d"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg></div>
+            <div class="liga" style="background: #15803d"></div>
+            <div class="passo" style="background: #b4432c; color: #ffffff">2</div>
+            <div class="liga" style="background: #e7e2db"></div>
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">3</div>
+            <span style="font-size: 13px; color: #8f351f; font-weight: 600; margin-left: 12px">separar</span>
+          </div>
+          <span style="font-size: 14px; color: #57534e">7 itens sugeridos</span>
+          <div style="text-align: right">
+            <button style="min-height: 38px; padding: 0 16px; border: 0; border-radius: 8px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Separar</button>
+          </div>
+        </div>
+
+        <!-- Sushi -->
+        <div style="display: grid; grid-template-columns: 150px 1fr 190px 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ece6">
+          <span style="font-size: 15px; font-weight: 600">Sushi</span>
+          <div style="display: flex; align-items: center; gap: 0">
+            <div class="passo" style="background: #15803d"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg></div>
+            <div class="liga" style="background: #15803d"></div>
+            <div class="passo" style="background: #15803d"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg></div>
+            <div class="liga" style="background: #15803d"></div>
+            <div class="passo" style="background: #15803d"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg></div>
+            <span style="font-size: 13px; color: #15803d; font-weight: 600; margin-left: 12px">completo</span>
+          </div>
+          <span style="font-size: 14px; color: #78716c">Recebido por Jonas · 08:31</span>
+          <div style="text-align: right"><a href="#" style="font-size: 14px">ver rodada</a></div>
+        </div>
+
+        <!-- Salão -->
+        <div style="display: grid; grid-template-columns: 150px 1fr 190px 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ece6">
+          <span style="font-size: 15px; font-weight: 600">Salão</span>
+          <div style="display: flex; align-items: center; gap: 0">
+            <div class="passo" style="background: #15803d"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg></div>
+            <div class="liga" style="background: #15803d"></div>
+            <div class="passo" style="background: #15803d"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg></div>
+            <div class="liga" style="background: #15803d"></div>
+            <div class="passo" style="background: #15803d"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg></div>
+            <span style="font-size: 13px; color: #15803d; font-weight: 600; margin-left: 12px">completo</span>
+          </div>
+          <span style="font-size: 14px; color: #78716c">Recebido por Bruna · 08:52</span>
+          <div style="text-align: right"><a href="#" style="font-size: 14px">ver rodada</a></div>
+        </div>
+
+        <!-- Cozinha: travado -->
+        <div style="display: grid; grid-template-columns: 150px 1fr 190px 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ece6">
+          <span style="font-size: 15px; font-weight: 600">Cozinha</span>
+          <div style="display: flex; align-items: center; gap: 0">
+            <div class="passo" style="background: rgba(180,83,9,0.14); color: #b45309">1</div>
+            <div class="liga" style="background: #e7e2db"></div>
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">2</div>
+            <div class="liga" style="background: #e7e2db"></div>
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">3</div>
+            <span style="font-size: 13px; color: #b45309; font-weight: 600; margin-left: 12px">falta contar</span>
+          </div>
+          <span style="font-size: 14px; color: #57534e">Líder: Regis Araujo</span>
+          <div style="text-align: right">
+            <button style="min-height: 38px; padding: 0 14px; border: 1px solid #e7e2db; border-radius: 8px; background: #ffffff; color: #1c1917; font-family: inherit; font-size: 14px; cursor: pointer">Ver setor</button>
+          </div>
+        </div>
+
+        <!-- Delivery -->
+        <div style="display: grid; grid-template-columns: 150px 1fr 190px 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f0ece6; opacity: 0.68">
+          <span style="font-size: 15px; font-weight: 600">Delivery</span>
+          <div style="display: flex; align-items: center; gap: 0">
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">1</div>
+            <div class="liga" style="background: #e7e2db"></div>
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">2</div>
+            <div class="liga" style="background: #e7e2db"></div>
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">3</div>
+            <span style="font-size: 13px; color: #a8a29e; margin-left: 12px">não iniciado</span>
+          </div>
+          <span style="font-size: 14px; color: #78716c">—</span>
+          <div style="text-align: right"></div>
+        </div>
+
+        <!-- Limpeza -->
+        <div style="display: grid; grid-template-columns: 150px 1fr 190px 150px; align-items: center; padding: 14px 18px; opacity: 0.68">
+          <span style="font-size: 15px; font-weight: 600">Limpeza</span>
+          <div style="display: flex; align-items: center; gap: 0">
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">1</div>
+            <div class="liga" style="background: #e7e2db"></div>
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">2</div>
+            <div class="liga" style="background: #e7e2db"></div>
+            <div class="passo" style="background: #f3efe9; border: 1px solid #e7e2db; color: #a8a29e">3</div>
+            <span style="font-size: 13px; color: #a8a29e; margin-left: 12px">não iniciado</span>
+          </div>
+          <span style="font-size: 14px; color: #78716c">—</span>
+          <div style="text-align: right"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

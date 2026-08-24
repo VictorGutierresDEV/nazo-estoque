@@ -1,0 +1,192 @@
+{
+  "pages": [
+    {
+      "id": "direcoes",
+      "name": "Direções da tela inicial"
+    },
+    {
+      "id": "telas",
+      "name": "Telas-chave"
+    },
+    {
+      "id": "pc",
+      "name": "PC · desktop"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "A · Fila de tarefas",
+      "page": "direcoes",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "CicloDoDia.dc.html",
+      "title": "B · Ciclo do dia",
+      "page": "direcoes",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "UmaCoisaPorVez.dc.html",
+      "title": "C · Uma coisa por vez",
+      "page": "direcoes",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ContagemCega.dc.html",
+      "title": "Contagem cega",
+      "page": "telas",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Recebimento.dc.html",
+      "title": "Recebimento no pulmão",
+      "page": "telas",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ApurarDivergencia.dc.html",
+      "title": "Apurar divergência",
+      "page": "telas",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "PcPainel.dc.html",
+      "title": "PC · Painel do dia",
+      "page": "pc",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "PcSeparacao.dc.html",
+      "title": "PC · Separação da manhã",
+      "page": "pc",
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    }
+  ],
+  "annotations": [
+    {
+      "id": "como-ler",
+      "page": "direcoes",
+      "x": 0,
+      "y": -230,
+      "w": 390,
+      "text": "COMO LER\n\nTrês respostas diferentes para \"o que fazer agora\". Mesmas funções, mesmo backend, mesmos tokens do app.\n\nNada aqui muda regra: as ações continuam sendo contar, separar, receber, apurar."
+    },
+    {
+      "id": "dir-a",
+      "page": "direcoes",
+      "x": 470,
+      "y": -230,
+      "w": 390,
+      "text": "A · FILA DE TAREFAS\n\nPor que: a tela é uma fila priorizada. Quem abre não escolhe módulo, escolhe a próxima tarefa. O que está com outra pessoa aparece esmaecido, sem botão — informa sem cobrar.\n\nCusto: perde-se a visão do ciclo. Quem precisa saber \"como está o dia\" tem de somar cartões de cabeça."
+    },
+    {
+      "id": "dir-b",
+      "page": "direcoes",
+      "x": 940,
+      "y": -230,
+      "w": 390,
+      "text": "B · CICLO DO DIA\n\nPor que: os 6 setores viram linhas com a trilha Contar → Separar → Receber. O gestor lê o dia em dois segundos e vê onde travou e com quem.\n\nCusto: mais denso. Para o auxiliar que só conta o Sushi, é informação que ele não usa — e exige entender o ciclo."
+    },
+    {
+      "id": "dir-c",
+      "page": "direcoes",
+      "x": 1410,
+      "y": -230,
+      "w": 390,
+      "text": "C · UMA COISA POR VEZ\n\nPor que: uma tarefa ocupa a tela inteira, ação no polegar, tipografia de 34px. É a mais rápida em pé, no meio do serviço, com pressa.\n\nCusto: esconde o resto. Quem tem visão de conjunto (Gerente de CPD, direção) fica cego para prioridade e volume."
+    },
+    {
+      "id": "minha-leitura",
+      "page": "direcoes",
+      "x": 1410,
+      "y": 60,
+      "w": 390,
+      "text": "MINHA LEITURA\n\nNenhuma serve para todos os papéis, e é aí que está a saída: a tela inicial pode seguir a função que a pessoa exerce, que o banco já sabe.\n\nAuxiliar e líder → C ou A.\nEstoquista → A.\nGerente de CPD e direção → B.\n\nSe preferir uma só para todos, eu recomendo A: é a que menos exige entender a arquitetura, que era a sua queixa central."
+    },
+    {
+      "id": "telas-nota",
+      "page": "telas",
+      "x": 0,
+      "y": -230,
+      "w": 390,
+      "text": "TELAS-CHAVE\n\nValem para qualquer direção escolhida. Aqui a mudança é de interação, não de regra.\n\nCONTAGEM CEGA: hoje são 87 linhas com campos pequenos. Aqui é um item por vez, teclado grande, sem mostrar o esperado — a regra de contagem cega vira também a forma da tela."
+    },
+    {
+      "id": "telas-nota-2",
+      "page": "telas",
+      "x": 470,
+      "y": -230,
+      "w": 390,
+      "text": "RECEBIMENTO\n\nO padrão é \"chegou tudo\": só se mexe no item que veio diferente, e esse item fica visualmente destacado.\n\nA frase \"a diferença não desaparece, fica para apuração\" aparece antes de confirmar, não depois — é o que evita a sensação de que o sistema engoliu o número."
+    },
+    {
+      "id": "telas-nota-3",
+      "page": "telas",
+      "x": 940,
+      "y": -230,
+      "w": 390,
+      "text": "APURAR DIVERGÊNCIA\n\nCada causa mostra PARA ONDE o saldo vai antes de ser escolhida — verde volta ao Principal, cinza entra no pulmão, vermelho sai como perda.\n\nA regra de que só uma causa devolve ao Principal deixa de ser texto escondido e passa a ser a própria leitura da tela."
+    },
+    {
+      "id": "fora-de-escopo",
+      "page": "telas",
+      "x": 1410,
+      "y": -230,
+      "w": 390,
+      "text": "AINDA NÃO DESENHADO\n\nMínimos, Itens, Extrato e Inventário de implantação continuam como estão. São telas de preparo e consulta, usadas sentado — não sofrem do problema que você descreveu.\n\nFalta também a versão tablet da separação da manhã, que é a única etapa feita em bancada e não em pé. Se quiser, desenho depois da direção escolhida."
+    },
+    {
+      "id": "pc-nota",
+      "page": "pc",
+      "x": 0,
+      "y": -270,
+      "w": 460,
+      "text": "PC · POR QUE A TELA GRANDE MUDA A DECISÃO\n\nNo celular era preciso escolher entre a fila de tarefas (A) e o ciclo do dia (B). No PC não: cabem as duas ao mesmo tempo.\n\nA esquerda continua sendo “o que fazer agora” — a mesma fila, mesma prioridade. A direita é o dia inteiro em uma leitura: 6 setores, em que etapa cada um está e com quem está parado.\n\nEsta é a tela do Gerente de CPD e da direção."
+    },
+    {
+      "id": "pc-nota-2",
+      "page": "pc",
+      "x": 1520,
+      "y": -270,
+      "w": 460,
+      "text": "PC · SEPARAÇÃO DA MANHÃ\n\nA única etapa feita em bancada, não em pé — e a que mais ganha com tela grande: sugerido, contado, mínimo, separado e saldo do Principal ficam na mesma linha, comparáveis de relance.\n\nO item ajustado se destaca sozinho, e o motivo do ajuste fica ao lado do número, não escondido em outra tela.\n\nO aviso de custódia aparece ANTES de confirmar: quem separa não recebe."
+    },
+    {
+      "id": "pc-nota-3",
+      "page": "pc",
+      "x": 1520,
+      "y": 960,
+      "w": 460,
+      "text": "SOBRE RESPONSIVIDADE\n\nNão são dois apps. É o mesmo layout em três larguras:\n\naté 768px  → uma coluna, a fila de tarefas (telas do celular)\n768–1200px → duas colunas, ciclo em cartões (tablet)\nacima      → o que está aqui\n\nOs tokens, os componentes e os alvos de 48px são os mesmos em todas."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "pc"
+  }
+}

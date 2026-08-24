@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Geist, system-ui, -apple-system, sans-serif; }
+    a { color: #b4432c; text-decoration: none; }
+    a:hover { color: #8f351f; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #faf8f5; color: #1c1917; display: flex; flex-direction: column; overflow: hidden">
+
+  <!-- cabeçalho mínimo -->
+  <div style="padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="font-size: 12px; color: #78716c; letter-spacing: 0.02em">NAZO ASA SUL · 08:47</div>
+    <div style="display: flex; align-items: center; gap: 6px">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #b4432c"></span>
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #d9d2c9"></span>
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #d9d2c9"></span>
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #d9d2c9"></span>
+      <span style="font-size: 12px; color: #78716c; margin-left: 4px">1 de 4</span>
+    </div>
+  </div>
+
+  <!-- a coisa -->
+  <div style="flex: 1; padding: 8px 20px 0; display: flex; flex-direction: column">
+
+    <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #b45309; background: rgba(180,83,9,0.10); padding: 6px 10px; border-radius: 7px; letter-spacing: 0.03em; margin-bottom: 20px">
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3v7l4 2"/><circle cx="10" cy="10" r="7.5"/></svg>
+      PARADO HÁ 2 DIAS
+    </span>
+
+    <div style="font-size: 34px; font-weight: 700; line-height: 1.12; letter-spacing: -0.02em; margin-bottom: 14px; text-wrap: pretty">Apurar 3&nbsp;kg em trânsito</div>
+
+    <div style="font-size: 17px; color: #57534e; line-height: 1.5; margin-bottom: 26px; text-wrap: pretty">Camarão 51/60, separado para o Sushi e nunca recebido. Enquanto não for apurado, o saldo fica preso.</div>
+
+    <!-- o essencial, grande -->
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; overflow: hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #f0ece6">
+        <span style="font-size: 15px; color: #78716c">Separado</span>
+        <span style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums">15 kg</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #f0ece6">
+        <span style="font-size: 15px; color: #78716c">Recebido</span>
+        <span style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums">12 kg</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: rgba(180,83,9,0.05)">
+        <span style="font-size: 15px; font-weight: 600; color: #b45309">Em trânsito</span>
+        <span style="font-size: 22px; font-weight: 700; color: #b45309; font-variant-numeric: tabular-nums">3 kg</span>
+      </div>
+    </div>
+
+    <div style="flex: 1"></div>
+
+    <div style="font-size: 14px; color: #78716c; text-align: center; margin-bottom: 12px">Separado por você às 08:14 · Sushi</div>
+  </div>
+
+  <!-- zona do polegar -->
+  <div style="padding: 0 20px 22px; display: flex; flex-direction: column; gap: 10px">
+    <button style="width: 100%; min-height: 60px; border: 0; border-radius: 12px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(180,67,44,0.25)">Apurar agora</button>
+    <div style="display: flex; gap: 10px">
+      <button style="flex: 1; min-height: 48px; border: 1px solid #e7e2db; border-radius: 10px; background: #ffffff; color: #78716c; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer">Pular</button>
+      <button style="flex: 1; min-height: 48px; border: 1px solid #e7e2db; border-radius: 10px; background: #ffffff; color: #1c1917; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px">
+        Ver tudo
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 6h13M3.5 10h13M3.5 14h13"/></svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

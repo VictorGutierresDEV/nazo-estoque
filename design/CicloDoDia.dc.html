@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Geist, system-ui, -apple-system, sans-serif; }
+    a { color: #b4432c; text-decoration: none; }
+    a:hover { color: #8f351f; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #faf8f5; color: #1c1917; display: flex; flex-direction: column; overflow: hidden">
+
+  <div style="padding: 14px 16px 10px; background: #ffffff; border-bottom: 1px solid #e7e2db; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="min-width: 0">
+      <div style="font-size: 12px; color: #78716c; letter-spacing: 0.02em">NAZO ASA SUL · SEG 24/AGO</div>
+      <div style="font-size: 17px; font-weight: 700; line-height: 1.2">Ciclo do dia</div>
+    </div>
+    <div style="width: 36px; height: 36px; border-radius: 50%; background: #f3efe9; border: 1px solid #e7e2db; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #78716c; flex-shrink: 0">MA</div>
+  </div>
+
+  <!-- barra de progresso do ciclo -->
+  <div style="padding: 14px 16px 12px; background: #ffffff; border-bottom: 1px solid #e7e2db">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px">
+      <span style="font-size: 14px; font-weight: 600">2 de 6 pulmões abastecidos</span>
+      <span style="font-size: 13px; color: #b45309; font-weight: 600">faltam 47 min</span>
+    </div>
+    <div style="display: flex; gap: 4px">
+      <div style="flex: 1; height: 6px; border-radius: 3px; background: #15803d"></div>
+      <div style="flex: 1; height: 6px; border-radius: 3px; background: #15803d"></div>
+      <div style="flex: 1; height: 6px; border-radius: 3px; background: #b4432c"></div>
+      <div style="flex: 1; height: 6px; border-radius: 3px; background: #e7e2db"></div>
+      <div style="flex: 1; height: 6px; border-radius: 3px; background: #e7e2db"></div>
+      <div style="flex: 1; height: 6px; border-radius: 3px; background: #e7e2db"></div>
+    </div>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px">
+
+    <!-- setor em andamento: aberto -->
+    <div style="background: #ffffff; border: 2px solid #b4432c; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(180,67,44,0.10)">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px">
+        <span style="font-size: 17px; font-weight: 700">Bar</span>
+        <span style="font-size: 11px; font-weight: 700; color: #b4432c; background: #fdf0ec; padding: 4px 8px; border-radius: 6px">SUA VEZ</span>
+      </div>
+
+      <!-- trilha do ciclo -->
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 14px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: #15803d; display: flex; align-items: center; justify-content: center">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg>
+          </div>
+          <span style="font-size: 11px; color: #78716c; text-align: center">Contado</span>
+        </div>
+        <div style="height: 2px; flex: 0 0 20px; background: #15803d; margin-bottom: 16px"></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: #b4432c; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #ffffff">2</div>
+          <span style="font-size: 11px; color: #1c1917; font-weight: 600; text-align: center">Separar</span>
+        </div>
+        <div style="height: 2px; flex: 0 0 20px; background: #e7e2db; margin-bottom: 16px"></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1">
+          <div style="width: 26px; height: 26px; border-radius: 50%; background: #f3efe9; border: 1px solid #e7e2db; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #a8a29e">3</div>
+          <span style="font-size: 11px; color: #a8a29e; text-align: center">Receber</span>
+        </div>
+      </div>
+
+      <div style="font-size: 14px; color: #78716c; line-height: 1.45; margin-bottom: 12px">7 itens sugeridos, somando 23 unidades</div>
+      <button style="width: 100%; min-height: 48px; border: 0; border-radius: 8px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Separar o Bar</button>
+    </div>
+
+    <!-- concluídos, colapsados -->
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px">
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(21,128,61,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg>
+      </div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600">Sushi</div>
+        <div style="font-size: 13px; color: #78716c">Recebido por Jonas às 08:31</div>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px">
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(21,128,61,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5l4 4 8-8"/></svg>
+      </div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600">Salão</div>
+        <div style="font-size: 13px; color: #78716c">Recebido por Bruna às 08:52</div>
+      </div>
+    </div>
+
+    <!-- travado por outro -->
+    <div style="background: #ffffff; border: 1px solid rgba(180,83,9,0.35); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px">
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(180,83,9,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><path d="M10 6v4.5M10 13.5v.01"/></svg>
+      </div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600">Cozinha</div>
+        <div style="font-size: 13px; color: #b45309">Falta o líder contar o pulmão</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#a8a29e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="M7.5 4.5l6 5.5-6 5.5"/></svg>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; opacity: 0.66">
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: #f3efe9; border: 1px solid #e7e2db; flex-shrink: 0"></div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600">Delivery</div>
+        <div style="font-size: 13px; color: #78716c">Ainda não contado</div>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; opacity: 0.66">
+      <div style="width: 24px; height: 24px; border-radius: 50%; background: #f3efe9; border: 1px solid #e7e2db; flex-shrink: 0"></div>
+      <div style="flex: 1; min-width: 0">
+        <div style="font-size: 15px; font-weight: 600">Limpeza</div>
+        <div style="font-size: 13px; color: #78716c">Ainda não contado</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="border-top: 1px solid #e7e2db; background: #ffffff; padding: 10px 16px 14px; display: flex; gap: 8px">
+    <button style="flex: 1; min-height: 44px; border: 1px solid rgba(180,83,9,0.4); border-radius: 8px; background: rgba(180,83,9,0.06); color: #b45309; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">1 divergência</button>
+    <button style="flex: 1; min-height: 44px; border: 1px solid #e7e2db; border-radius: 8px; background: #ffffff; color: #1c1917; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Estoque</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

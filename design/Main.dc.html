@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Geist, system-ui, -apple-system, sans-serif; }
+    a { color: #b4432c; text-decoration: none; }
+    a:hover { color: #8f351f; }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 844px; background: #faf8f5; color: #1c1917; display: flex; flex-direction: column; overflow: hidden">
+
+  <!-- cabeçalho -->
+  <div style="padding: 14px 16px 10px; background: #ffffff; border-bottom: 1px solid #e7e2db; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="min-width: 0">
+      <div style="font-size: 12px; color: #78716c; letter-spacing: 0.02em">NAZO ASA SUL</div>
+      <div style="font-size: 17px; font-weight: 700; line-height: 1.2">Bom dia, Mauricio</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0">
+      <span style="font-size: 11px; font-weight: 600; color: #b4432c; background: #fdf0ec; padding: 4px 8px; border-radius: 6px">Estoquista</span>
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: #f3efe9; border: 1px solid #e7e2db; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #78716c">MA</div>
+    </div>
+  </div>
+
+  <!-- resumo do que importa agora -->
+  <div style="padding: 14px 16px 8px; display: flex; align-items: baseline; justify-content: space-between">
+    <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.01em">O que fazer agora</div>
+    <div style="font-size: 13px; color: #78716c">4 pendências</div>
+  </div>
+
+  <!-- fila de tarefas -->
+  <div style="flex: 1; overflow: hidden; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 10px">
+
+    <!-- tarefa 1: urgente -->
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px; box-shadow: 0 1px 2px rgba(28,25,23,0.04)">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #b45309; background: rgba(180,83,9,0.10); padding: 4px 8px; border-radius: 6px; letter-spacing: 0.02em">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3v7l4 2"/><circle cx="10" cy="10" r="7.5"/></svg>
+          PARADO HÁ 2 DIAS
+        </span>
+      </div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3; margin-bottom: 4px">Apurar 3&nbsp;kg em trânsito</div>
+      <div style="font-size: 14px; color: #78716c; line-height: 1.45; margin-bottom: 12px">Camarão 51/60 · separado para o Sushi e não recebido</div>
+      <div style="display: flex; gap: 8px">
+        <button style="flex: 1; min-height: 48px; border: 0; border-radius: 8px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Apurar agora</button>
+        <button style="min-height: 48px; padding: 0 16px; border: 1px solid #e7e2db; border-radius: 8px; background: #ffffff; color: #78716c; font-family: inherit; font-size: 15px; cursor: pointer">Depois</button>
+      </div>
+    </div>
+
+    <!-- tarefa 2 -->
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px; box-shadow: 0 1px 2px rgba(28,25,23,0.04)">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+        <span style="font-size: 11px; font-weight: 700; color: #b4432c; background: #fdf0ec; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.02em">ATÉ AS 09:00</span>
+      </div>
+      <div style="font-size: 17px; font-weight: 600; line-height: 1.3; margin-bottom: 4px">Separar reposição do Bar</div>
+      <div style="font-size: 14px; color: #78716c; line-height: 1.45; margin-bottom: 12px">7 itens sugeridos · contagem do Bar fechada às 23:41</div>
+      <button style="width: 100%; min-height: 48px; border: 0; border-radius: 8px; background: #b4432c; color: #ffffff; font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer">Ver separação</button>
+    </div>
+
+    <!-- tarefa 3: aguardando outra pessoa -->
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px; opacity: 0.72">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: #78716c; background: #f3efe9; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.02em">
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 5.5v9M5.5 10h9"/></svg>
+          COM O JONAS
+        </span>
+      </div>
+      <div style="font-size: 16px; font-weight: 600; line-height: 1.3; margin-bottom: 4px">Sushi aguarda recebimento</div>
+      <div style="font-size: 14px; color: #78716c; line-height: 1.45">Você separou 12 itens às 08:14. Quem recebe é o líder.</div>
+    </div>
+
+    <!-- tarefa 4 -->
+    <div style="background: #ffffff; border: 1px solid #e7e2db; border-radius: 12px; padding: 14px">
+      <div style="font-size: 16px; font-weight: 600; line-height: 1.3; margin-bottom: 4px">Cozinha ainda não contou o pulmão</div>
+      <div style="font-size: 14px; color: #78716c; line-height: 1.45; margin-bottom: 12px">Sem a contagem não há sugestão de reposição</div>
+      <button style="width: 100%; min-height: 44px; border: 1px solid #e7e2db; border-radius: 8px; background: #ffffff; color: #1c1917; font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer">Cobrar o líder</button>
+    </div>
+
+  </div>
+
+  <!-- rodapé: tudo em ordem + acesso ao resto -->
+  <div style="border-top: 1px solid #e7e2db; background: #ffffff; padding: 10px 16px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 8px; min-width: 0">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="M4 10.5l4 4 8-8"/></svg>
+      <span style="font-size: 13px; color: #78716c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Salão, Delivery e Limpeza em ordem</span>
+    </div>
+    <button style="flex-shrink: 0; min-height: 40px; padding: 0 14px; border: 1px solid #e7e2db; border-radius: 8px; background: #ffffff; color: #1c1917; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer">Estoque</button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
