@@ -32,7 +32,9 @@ export async function carregarContexto(): Promise<Contexto | null> {
     .select('id, nome, role, unidade_id, unidade_ativa, ativo')
     .eq('id', user.id)
     .single()
-  if (!perfil) return null
+  // Perfil desativado não opera (o proxy já encerrou a sessão; isto é a
+  // segunda trava, para o caso de a página ser renderizada mesmo assim).
+  if (!perfil || perfil.ativo === false) return null
 
   const unidadeId = perfil.unidade_ativa ?? perfil.unidade_id
   if (!unidadeId) return null

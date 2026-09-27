@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarClienteNavegador } from '@/lib/supabase/client'
+import { loginBanido, MENSAGEM_DESATIVADO } from '@/lib/perfil-desativado'
 
-export default function Login() {
+export default function Login({ searchParams }: PageProps<'/login'>) {
   const router = useRouter()
+  const { desativado } = use(searchParams)
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [erro, setErro] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(desativado ? MENSAGEM_DESATIVADO : null)
   const [enviando, setEnviando] = useState(false)
 
   async function entrar(evento: React.FormEvent) {
@@ -23,10 +25,13 @@ export default function Login() {
     })
 
     if (error) {
+      // Login banido: o perfil foi desativado no Nazo Gestão.
       setErro(
-        error.message === 'Invalid login credentials'
-          ? 'E-mail ou senha incorretos.'
-          : error.message,
+        loginBanido(error)
+          ? MENSAGEM_DESATIVADO
+          : error.message === 'Invalid login credentials'
+            ? 'E-mail ou senha incorretos.'
+            : error.message,
       )
       setEnviando(false)
       return
