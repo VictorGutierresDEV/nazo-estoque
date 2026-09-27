@@ -1,12 +1,10 @@
 'use client'
 
 import { use, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { criarClienteNavegador } from '@/lib/supabase/client'
 import { loginBanido, MENSAGEM_DESATIVADO } from '@/lib/perfil-desativado'
 
 export default function Login({ searchParams }: PageProps<'/login'>) {
-  const router = useRouter()
   const { desativado } = use(searchParams)
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -37,8 +35,11 @@ export default function Login({ searchParams }: PageProps<'/login'>) {
       return
     }
 
-    router.replace('/')
-    router.refresh()
+    // Navegação completa, e não a do roteador: se o perfil estiver desativado,
+    // o proxy encerra a sessão e devolve para /login?desativado=1 — o mesmo
+    // endereço desta tela, que pela navegação do roteador não se recria e
+    // ficaria em "Entrando…", sem a mensagem (etapa P, 27/set).
+    window.location.assign('/')
   }
 
   return (
