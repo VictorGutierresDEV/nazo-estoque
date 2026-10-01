@@ -9,6 +9,12 @@ import {
   podeNoSetor,
 } from '@/lib/estoque'
 import { filaDeContagem } from '@/lib/contagem'
+import {
+  acessoDeLeitura,
+  escolherSetor,
+  leituraRestrita,
+} from '@/lib/acesso-leitura'
+import { AvisoForaDoAcesso, SemSetorVisivel } from '../avisos-acesso'
 import { FormContagem } from './form'
 
 export default async function Contagem({
@@ -21,9 +27,14 @@ export default async function Contagem({
   const params = await searchParams
   const ciclo = typeof params.ciclo === 'string' ? params.ciclo : CICLO_HOJE()
 
-  const setores = (await listarSetores(ctx.unidadeId)).filter((s) =>
-    podeNoSetor(ctx, s.id, 'pulmao.contar'),
-  )
+  const [visiveis, acesso] = await Promise.all([
+    listarSetores(ctx.unidadeId),
+    acessoDeLeitura(ctx.unidadeId),
+  ])
+  const setores = visiveis.filter((s) => podeNoSetor(ctx, s.id, 'pulmao.contar'))
+
+  // Com a v57, a lista vazia pode ser a RLS, não a falta de vínculo.
+  if (acesso.modo === 'v57' && !visiveis.length) return <SemSetorVisivel />
 
   if (!setores.length) {
     return (
@@ -38,31 +49,39 @@ export default async function Contagem({
     )
   }
 
-  const setorId =
-    typeof params.setor === 'string' &&
-    setores.some((s) => s.id === params.setor)
-      ? params.setor
-      : setores[0].id
+  const { setorId, foraDoAcesso } = escolherSetor(setores, params.setor, acesso)
 
   // O saldo do pulmão nunca chega ao navegador: a fila vem montada e sem
   // quantidade. A contagem é cega.
-  const [{ fila, resto }, atual, lideres] = await Promise.all([
-    filaDeContagem(ctx.unidadeId, setorId),
-    contagemDoCiclo(ctx.unidadeId, setorId, ciclo),
-    listarLideres(ctx.unidadeId, setorId),
-  ])
+  const [{ fila, resto }, atual, { lideres, algumDeForaDoSetor }] =
+    await Promise.all([
+      filaDeContagem(ctx.unidadeId, setorId),
+      contagemDoCiclo(ctx.unidadeId, setorId, ciclo),
+      listarLideres(ctx.unidadeId, setorId),
+    ])
+
+  // v57, fora da gestão: a RLS só mostra as pessoas do setor. A lista não é
+  // ampliada aqui (é decisão de papel); só se explica a lista curta.
+  const notaLideres =
+    leituraRestrita(acesso) && !algumDeForaDoSetor
+      ? 'Mostrando as pessoas do seu setor.'
+      : null
 
   return (
-    <FormContagem
-      ciclo={ciclo}
-      setores={setores}
-      setorId={setorId}
-      fila={fila}
-      resto={resto}
-      contagem={atual.contagem}
-      itensContados={atual.itens}
-      lideres={lideres}
-      podeFinalizar={podeNoSetor(ctx, setorId, 'pulmao.finalizar_contagem')}
-    />
+    <>
+      {foraDoAcesso && <AvisoForaDoAcesso />}
+      <FormContagem
+        ciclo={ciclo}
+        setores={setores}
+        setorId={setorId}
+        fila={fila}
+        resto={resto}
+        contagem={atual.contagem}
+        itensContados={atual.itens}
+        lideres={lideres}
+        notaLideres={notaLideres}
+        podeFinalizar={podeNoSetor(ctx, setorId, 'pulmao.finalizar_contagem')}
+      />
+    </>
   )
 }

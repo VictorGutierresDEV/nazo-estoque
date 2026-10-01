@@ -10,6 +10,8 @@ import {
   type Contexto,
   type Setor,
 } from '@/lib/estoque'
+import { semErro } from '@/lib/acesso-leitura-nucleo'
+import { acessoDeLeitura, leituraRestrita } from '@/lib/acesso-leitura'
 
 /**
  * "O que fazer agora": a fila de pendências da unidade.
@@ -55,6 +57,11 @@ function dias(iso: string) {
 export async function montarPainel(ctx: Contexto, ciclo: string) {
   const supabase = await criarClienteServidor()
 
+  // Com a v57, fora da gestão, a pessoa só vê os seus setores e não lê saldo:
+  // trânsito e Principal não são calculados (a visão chegaria vazia e o
+  // painel diria 0), e os totais passam a ser "dos seus setores".
+  const restrita = leituraRestrita(await acessoDeLeitura(ctx.unidadeId))
+
   const [setores, contagens, rodadas, divergencias, itens, locais, saldos] =
     await Promise.all([
       listarSetores(ctx.unidadeId),
@@ -70,9 +77,11 @@ export async function montarPainel(ctx: Contexto, ciclo: string) {
         .eq('ciclo', ciclo),
       divergenciasPendentes(ctx.unidadeId),
       listarItens(ctx.unidadeId),
-      listarLocais(ctx.unidadeId),
-      carregarSaldos(ctx.unidadeId),
+      restrita ? null : listarLocais(ctx.unidadeId),
+      restrita ? null : carregarSaldos(ctx.unidadeId),
     ])
+  semErro('as contagens do ciclo', contagens.error)
+  semErro('as rodadas do ciclo', rodadas.error)
 
   const porSetorContagem = new Map(
     (contagens.data ?? []).map((c) => [c.setor_id, c]),
@@ -83,10 +92,11 @@ export async function montarPainel(ctx: Contexto, ciclo: string) {
   const itensPorRodada = new Map<string, number>()
   const idsRodada = (rodadas.data ?? []).map((r) => r.id)
   if (idsRodada.length) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('estoque_rodada_itens')
       .select('rodada_id')
       .in('rodada_id', idsRodada)
+    semErro('os itens das rodadas', error)
     for (const l of data ?? [])
       itensPorRodada.set(l.rodada_id, (itensPorRodada.get(l.rodada_id) ?? 0) + 1)
   }
@@ -214,21 +224,28 @@ export async function montarPainel(ctx: Contexto, ciclo: string) {
 
   tarefas.sort((a, b) => a.prioridade - b.prioridade)
 
-  const emTransito = locais
-    .filter((l) => l.tipo === 'TRANSITO')
-    .flatMap((l) => Object.values(saldos[l.id] ?? {}))
-    .reduce((a, b) => a + b, 0)
+  // `null` = reservado à gestão e ao CPD (nunca 0).
+  let emTransito: number | null = null
+  let itensNoPrincipal: number | null = null
+  if (locais && saldos) {
+    emTransito = locais
+      .filter((l) => l.tipo === 'TRANSITO')
+      .flatMap((l) => Object.values(saldos[l.id] ?? {}))
+      .reduce((a, b) => a + b, 0)
 
-  const principal = locais.find((l) => l.tipo === 'PRINCIPAL')
+    const principal = locais.find((l) => l.tipo === 'PRINCIPAL')
+    itensNoPrincipal = principal
+      ? Object.values(saldos[principal.id] ?? {}).filter((q) => q > 0).length
+      : 0
+  }
 
   return {
+    restrita,
     tarefas,
     estados,
     divergencias: divergencias.length,
     emTransito,
-    itensNoPrincipal: principal
-      ? Object.values(saldos[principal.id] ?? {}).filter((q) => q > 0).length
-      : 0,
+    itensNoPrincipal,
     abastecidos: estados.filter((e) => e.rodada === 'RECEBIDA').length,
     totalSetores: estados.length,
   }

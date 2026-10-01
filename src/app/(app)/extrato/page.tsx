@@ -7,6 +7,7 @@ import {
   nomesDePessoas,
 } from '@/lib/estoque'
 import { dataHora, quantidade as fmt } from '@/lib/formato'
+import { acessoDeLeitura, leituraRestrita } from '@/lib/acesso-leitura'
 
 const FLUXO: Record<string, string> = {
   SALDO_INICIAL: 'Saldo inicial — principal',
@@ -37,8 +38,12 @@ export default async function Extrato() {
   const ctx = await carregarContexto()
   if (!ctx) return null
 
+  // Com a v57, fora da gestão, o razão chega vazio e a trilha só tem os
+  // eventos dos setores visíveis: a tela diz isso, em vez de "nenhum ainda".
+  const restrita = leituraRestrita(await acessoDeLeitura(ctx.unidadeId))
+
   const [movimentos, trilha, itens, locais] = await Promise.all([
-    carregarExtrato(ctx.unidadeId, 150),
+    restrita ? [] : carregarExtrato(ctx.unidadeId, 150),
     carregarTrilha(ctx.unidadeId, 150),
     listarItens(ctx.unidadeId),
     listarLocais(ctx.unidadeId),
@@ -65,9 +70,15 @@ export default async function Extrato() {
 
       <section className="cartao overflow-hidden">
         <h2 className="border-b border-borda px-4 py-3 text-sm font-semibold">
-          Razão de movimentações ({movimentos.length})
+          {restrita
+            ? 'Razão de movimentações'
+            : `Razão de movimentações (${movimentos.length})`}
         </h2>
-        {movimentos.length === 0 ? (
+        {restrita ? (
+          <p className="px-4 py-6 text-sm text-tinta-fraca">
+            Razão reservado à gestão e ao CPD.
+          </p>
+        ) : movimentos.length === 0 ? (
           <p className="px-4 py-6 text-sm text-tinta-fraca">
             Nenhum movimento ainda.
           </p>
@@ -129,11 +140,15 @@ export default async function Extrato() {
 
       <section className="cartao overflow-hidden">
         <h2 className="border-b border-borda px-4 py-3 text-sm font-semibold">
-          Trilha de auditoria ({trilha.length})
+          {restrita
+            ? `Eventos visíveis para o seu perfil (${trilha.length})`
+            : `Trilha de auditoria (${trilha.length})`}
         </h2>
         {trilha.length === 0 ? (
           <p className="px-4 py-6 text-sm text-tinta-fraca">
-            Nenhum evento ainda.
+            {restrita
+              ? 'Nenhum evento visível para o seu perfil.'
+              : 'Nenhum evento ainda.'}
           </p>
         ) : (
           <ul className="max-h-[32rem] divide-y divide-borda overflow-auto text-sm">

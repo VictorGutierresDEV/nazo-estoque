@@ -14,6 +14,34 @@ export type Database = {
   }
   public: {
     Tables: {
+      // Do Nazo Gestão (abastecimento dos pulmões), escrito à mão: o app só lê.
+      abast_unidades: {
+        Row: {
+          cadastro_desde: string | null
+          ciclo_desde: string | null
+          criado_em: string
+          criado_por: string | null
+          treino: boolean
+          unidade_id: string
+        }
+        Insert: {
+          cadastro_desde?: string | null
+          ciclo_desde?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          treino?: boolean
+          unidade_id: string
+        }
+        Update: {
+          cadastro_desde?: string | null
+          ciclo_desde?: string | null
+          criado_em?: string
+          criado_por?: string | null
+          treino?: boolean
+          unidade_id?: string
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           campo: string | null
@@ -4130,6 +4158,15 @@ export type Database = {
       estoque_confirmar_separacao: {
         Args: { p_rodada_id: string }
         Returns: number
+      }
+      estoque_d4_gestao: { Args: { p_unidade_id: string }; Returns: boolean }
+      estoque_d4_itens_com_saldo_pulmao: {
+        Args: { p_setor_id: string }
+        Returns: string[]
+      }
+      estoque_d4_unidade_implantada: {
+        Args: { p_unidade_id: string }
+        Returns: boolean
       }
       estoque_definir_minimo_casa: {
         Args: {

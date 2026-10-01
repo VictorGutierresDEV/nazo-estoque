@@ -9,11 +9,14 @@ import {
 } from '@/lib/operacoes'
 import { quantidade as fmt } from '@/lib/formato'
 import type { Item, Setor } from '@/lib/estoque'
+import { MENSAGEM_SEM_SETOR_VISIVEL } from '@/lib/acesso-leitura-nucleo'
 
 type Props = {
   escopo: 'pulmao' | 'casa'
   setores: Setor[]
   setorId: string
+  /** v57 sem setor visível: sem aba de pulmão. */
+  semSetorVisivel?: boolean
   itens: Item[]
   valores: Record<string, number>
   podeDefinirPulmao: boolean
@@ -49,6 +52,11 @@ export function EditorMinimos(p: Props) {
   function gravar() {
     if (modoSugestao && !justificativa.trim()) {
       setMsg({ ok: false, texto: 'A sugestão exige motivo.' })
+      return
+    }
+    // Mínimo de pulmão sem setor não vai ao banco.
+    if (noPulmao && !p.setorId) {
+      setMsg({ ok: false, texto: 'Escolha um setor antes de gravar.' })
       return
     }
     iniciar(async () => {
@@ -87,14 +95,16 @@ export function EditorMinimos(p: Props) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => ir('pulmao', p.setorId)}
-          aria-pressed={noPulmao}
-          className={noPulmao ? 'botao' : 'botao-neutro'}
-        >
-          Mínimo do pulmão
-        </button>
+        {!p.semSetorVisivel && (
+          <button
+            type="button"
+            onClick={() => ir('pulmao', p.setorId)}
+            aria-pressed={noPulmao}
+            className={noPulmao ? 'botao' : 'botao-neutro'}
+          >
+            Mínimo do pulmão
+          </button>
+        )}
         <button
           type="button"
           onClick={() => ir('casa')}
@@ -104,6 +114,12 @@ export function EditorMinimos(p: Props) {
           Mínimo da casa
         </button>
       </div>
+
+      {p.semSetorVisivel && (
+        <p className="text-sm text-tinta-fraca">
+          Mínimo do pulmão: {MENSAGEM_SEM_SETOR_VISIVEL}
+        </p>
+      )}
 
       {noPulmao && (
         <section className="cartao p-4">

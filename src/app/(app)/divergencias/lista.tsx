@@ -51,12 +51,15 @@ export function ListaDivergencias({
   itens,
   setores,
   podeApurar,
+  soDosSeusSetores = false,
 }: {
   pendentes: Divergencia[]
   causas: Causa[]
   itens: Item[]
   setores: Setor[]
   podeApurar: boolean
+  /** v57, fora da gestão: a lista é só dos setores que a pessoa vê. */
+  soDosSeusSetores?: boolean
 }) {
   const router = useRouter()
   const [escolha, setEscolha] = useState<Record<string, string>>({})
@@ -82,11 +85,14 @@ export function ListaDivergencias({
     return (
       <div className="cartao p-6">
         <h2 className="text-lg font-bold text-positivo">
-          Nenhuma divergência pendente
+          {soDosSeusSetores
+            ? 'Nenhuma divergência pendente nos seus setores'
+            : 'Nenhuma divergência pendente'}
         </h2>
         <p className="mt-2 text-sm text-tinta-fraca">
-          Todo resíduo de trânsito foi apurado e nenhuma contagem veio acima do
-          esperado.
+          {soDosSeusSetores
+            ? 'Nos setores do seu acesso, todo resíduo de trânsito foi apurado e nenhuma contagem veio acima do esperado.'
+            : 'Todo resíduo de trânsito foi apurado e nenhuma contagem veio acima do esperado.'}
         </p>
       </div>
     )

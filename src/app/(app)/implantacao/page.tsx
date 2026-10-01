@@ -9,6 +9,7 @@ import {
   nomesDePessoas,
   pode,
 } from '@/lib/estoque'
+import { acessoDeLeitura, leituraRestrita } from '@/lib/acesso-leitura'
 import { FormImplantacao } from './form'
 
 export default async function Implantacao() {
@@ -16,6 +17,23 @@ export default async function Implantacao() {
   if (!ctx) return null
   if (!pode(ctx, 'saldo_inicial.lancar')) redirect('/')
   if (ctx.emProducao) redirect('/')
+
+  // Com a v57, a implantação exige também ser da gestão: quem só tem a
+  // concessão direta não lê os saldos nem os inventários, e a checklist
+  // mostraria tudo zerado.
+  if (leituraRestrita(await acessoDeLeitura(ctx.unidadeId))) {
+    return (
+      <div className="cartao p-6">
+        <h1 className="text-lg font-bold">
+          Implantação reservada à gestão e ao CPD
+        </h1>
+        <p className="mt-2 text-sm text-tinta-fraca">
+          O inventário de implantação é lançado pela direção, pelo Gerente de
+          CPD ou pelo estoquista da unidade.
+        </p>
+      </div>
+    )
+  }
 
   const [itens, setores, locais, saldos, concluidos] = await Promise.all([
     listarItens(ctx.unidadeId),

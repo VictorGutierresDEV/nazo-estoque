@@ -10,6 +10,7 @@ import {
 } from '@/lib/operacoes'
 import { quantidade as fmt } from '@/lib/formato'
 import type { ContagemItem, Item, RodadaItem, Setor } from '@/lib/estoque'
+import { MENSAGEM_RESERVADO as SALDO_RESERVADO } from '@/lib/acesso-leitura-nucleo'
 
 type Props = {
   ciclo: string
@@ -21,8 +22,9 @@ type Props = {
   itensContados: ContagemItem[]
   rodada: { id: string; situacao: string } | null
   itensRodada: RodadaItem[]
-  saldoPrincipal: Record<string, number>
-  saldoTransito: Record<string, number>
+  /** `null` = saldo reservado à gestão e ao CPD (v57): não é zero. */
+  saldoPrincipal: Record<string, number> | null
+  saldoTransito: Record<string, number> | null
   podeSeparar: boolean
   podeReceber: boolean
 }
@@ -433,6 +435,12 @@ export function PainelAbastecimento(p: Props) {
     <div className="space-y-4">
       {abas}
 
+      {!p.saldoPrincipal && (
+        <p className="rounded-lg border border-borda bg-cartao px-4 py-3 text-sm text-tinta-fraca">
+          Saldo do Estoque Principal {SALDO_RESERVADO}.
+        </p>
+      )}
+
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-5">
         {/* tabela no PC */}
         <div className="cartao hidden overflow-hidden lg:block">
@@ -458,7 +466,11 @@ export function PainelAbastecimento(p: Props) {
             <tbody className="divide-y divide-borda">
               {linhas.map((r) => {
                 const item = itemDe.get(r.item_id)
-                const sobra = (p.saldoPrincipal[r.item_id] ?? 0) - aSepararDe(r)
+                const noPrincipal = p.saldoPrincipal
+                  ? (p.saldoPrincipal[r.item_id] ?? 0)
+                  : null
+                const sobra =
+                  noPrincipal === null ? null : noPrincipal - aSepararDe(r)
                 return (
                   <tr key={r.item_id} className={ajustes[r.item_id] ? 'bg-acento-fraco/50' : ''}>
                     <td className="px-4 py-2.5">
@@ -478,9 +490,14 @@ export function PainelAbastecimento(p: Props) {
                     </td>
                     <td className="px-2 py-2">{campoSeparar(r)}</td>
                     <td
-                      className={`px-4 py-2.5 text-right tabular-nums ${sobra <= 1 ? 'font-semibold text-alerta' : 'text-tinta-fraca'}`}
+                      className={`px-4 py-2.5 text-right tabular-nums ${sobra !== null && sobra <= 1 ? 'font-semibold text-alerta' : 'text-tinta-fraca'}`}
+                      title={
+                        noPrincipal === null
+                          ? `Saldo ${SALDO_RESERVADO}`
+                          : undefined
+                      }
                     >
-                      {fmt(p.saldoPrincipal[r.item_id] ?? 0)}
+                      {noPrincipal === null ? '—' : fmt(noPrincipal)}
                     </td>
                   </tr>
                 )
@@ -506,8 +523,9 @@ export function PainelAbastecimento(p: Props) {
                   </span>
                   <span className="text-[13px] text-tinta-fraca">
                     mínimo {fmt(p.minimos[r.item_id] ?? 0)} · contado{' '}
-                    {fmt(contados.get(r.item_id) ?? 0)} · no principal{' '}
-                    {fmt(p.saldoPrincipal[r.item_id] ?? 0)}
+                    {fmt(contados.get(r.item_id) ?? 0)}
+                    {p.saldoPrincipal &&
+                      ` · no principal ${fmt(p.saldoPrincipal[r.item_id] ?? 0)}`}
                   </span>
                 </div>
                 <div className="flex items-end gap-3">
@@ -545,9 +563,27 @@ function ResiduoTransito({
   saldo,
   itemDe,
 }: {
-  saldo: Record<string, number>
+  saldo: Record<string, number> | null
   itemDe: Map<string, Item>
 }) {
+  // Sem leitura do saldo (v57, fora da gestão): não dá para dizer que não há
+  // resíduo. Diz que o saldo é reservado e onde o resíduo aparece.
+  if (saldo === null) {
+    return (
+      <section className="cartao p-4">
+        <h2 className="text-sm font-semibold">
+          Resíduo em trânsito neste setor
+        </h2>
+        <p className="mt-1 text-sm text-tinta-fraca">
+          Saldo {SALDO_RESERVADO}.
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-tinta-fraca">
+          Resíduo pendente aparece em <strong>Divergências</strong>. Enquanto
+          não for apurado, permanece no razão — não some.
+        </p>
+      </section>
+    )
+  }
   const linhas = Object.entries(saldo).filter(([, q]) => q > 0)
   if (!linhas.length) return null
   return (

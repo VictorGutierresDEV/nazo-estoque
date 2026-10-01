@@ -7,6 +7,12 @@ import {
 } from '@/lib/estoque'
 import { montarPainel, type EstadoSetor, type Tarefa } from '@/lib/painel'
 import { quantidade as fmt } from '@/lib/formato'
+import {
+  acessoDeLeitura,
+  leituraRestrita,
+  MENSAGEM_RESERVADO,
+} from '@/lib/acesso-leitura'
+import { SemSetorVisivel } from './avisos-acesso'
 
 const TOM = {
   alerta: 'text-alerta bg-alerta/10',
@@ -18,9 +24,13 @@ export default async function Painel() {
   const ctx = await carregarContexto()
   if (!ctx) return null
 
-  const implantacao = await estadoDaImplantacao(ctx.unidadeId)
+  const [implantacao, acesso] = await Promise.all([
+    estadoDaImplantacao(ctx.unidadeId),
+    acessoDeLeitura(ctx.unidadeId),
+  ])
+  const restrita = leituraRestrita(acesso)
 
-  if (implantacao.itensLancados === 0) {
+  if (!implantacao.implantada) {
     return (
       <div className="cartao p-6">
         <h1 className="text-lg font-bold">Estoque ainda não implantado</h1>
@@ -28,7 +38,9 @@ export default async function Painel() {
           Nenhum saldo inicial lançado. O sistema começa pela contagem física da
           virada — Estoque Principal e pulmões dos setores.
         </p>
-        {pode(ctx, 'saldo_inicial.lancar') ? (
+        {/* Com a v57, a implantação é da gestão: concessão direta sem ser
+            gestão não abre a tela (ela diria "reservada"). */}
+        {pode(ctx, 'saldo_inicial.lancar') && !restrita ? (
           <Link href="/implantacao" className="botao mt-4">
             Ir para o inventário de implantação
           </Link>
@@ -44,6 +56,10 @@ export default async function Painel() {
 
   const ciclo = CICLO_HOJE()
   const p = await montarPainel(ctx, ciclo)
+
+  // Com a v57, sem setor visível não há ciclo a mostrar: nem "0/0" nem
+  // "em ordem", que diriam algo sobre setores que a pessoa não vê.
+  if (p.restrita && p.totalSetores === 0) return <SemSetorVisivel />
 
   const acionaveis = p.tarefas.filter((t) => t.acao)
   const emOrdem = p.estados.filter(
@@ -68,11 +84,14 @@ export default async function Painel() {
         {p.tarefas.length === 0 ? (
           <div className="cartao p-6">
             <p className="text-base font-semibold text-positivo">
-              Ciclo de hoje em ordem
+              {p.restrita
+                ? 'Ciclo de hoje em ordem nos seus setores'
+                : 'Ciclo de hoje em ordem'}
             </p>
             <p className="mt-1.5 text-sm text-tinta-fraca">
-              Todos os setores contados e abastecidos, nenhuma divergência
-              aberta.
+              {p.restrita
+                ? 'Todos os seus setores contados e abastecidos, nenhuma divergência aberta neles.'
+                : 'Todos os setores contados e abastecidos, nenhuma divergência aberta.'}
             </p>
           </div>
         ) : (
@@ -100,23 +119,38 @@ export default async function Painel() {
       {/* --------------------------- ciclo do dia --------------------------- */}
       <section className="mt-8 space-y-3 lg:mt-0">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Numero rotulo="Pulmões abastecidos" valor={`${p.abastecidos}`} de={`${p.totalSetores}`} />
           <Numero
-            rotulo="Em trânsito agora"
-            valor={fmt(p.emTransito)}
-            alerta={p.emTransito > 0}
+            rotulo={
+              p.restrita
+                ? 'Pulmões abastecidos nos seus setores'
+                : 'Pulmões abastecidos'
+            }
+            valor={`${p.abastecidos}`}
+            de={`${p.totalSetores}`}
           />
           <Numero
-            rotulo="Divergências"
+            rotulo="Em trânsito agora"
+            valor={p.emTransito === null ? null : fmt(p.emTransito)}
+            alerta={(p.emTransito ?? 0) > 0}
+          />
+          <Numero
+            rotulo={p.restrita ? 'Divergências nos seus setores' : 'Divergências'}
             valor={`${p.divergencias}`}
             alerta={p.divergencias > 0}
           />
-          <Numero rotulo="Itens no Principal" valor={`${p.itensNoPrincipal}`} />
+          <Numero
+            rotulo="Itens no Principal"
+            valor={
+              p.itensNoPrincipal === null ? null : `${p.itensNoPrincipal}`
+            }
+          />
         </div>
 
         <div className="cartao overflow-hidden">
           <div className="flex items-baseline justify-between border-b border-borda px-4 py-3">
-            <h2 className="text-sm font-semibold">Ciclo do dia</h2>
+            <h2 className="text-sm font-semibold">
+              {p.restrita ? 'Ciclo do dia nos seus setores' : 'Ciclo do dia'}
+            </h2>
             <span className="text-xs text-tinta-fraca">{ciclo}</span>
           </div>
           <ul className="divide-y divide-borda">
@@ -180,10 +214,21 @@ function Numero({
   alerta,
 }: {
   rotulo: string
-  valor: string
+  /** `null` = a pessoa não lê este número (v57): diz isso, nunca 0. */
+  valor: string | null
   de?: string
   alerta?: boolean
 }) {
+  if (valor === null) {
+    return (
+      <div className="cartao px-4 py-3">
+        <p className="text-xs text-tinta-fraca">{rotulo}</p>
+        <p className="mt-1 text-sm font-medium leading-snug text-tinta-fraca">
+          {MENSAGEM_RESERVADO}
+        </p>
+      </div>
+    )
+  }
   return (
     <div className="cartao px-4 py-3">
       <p className="text-xs text-tinta-fraca">{rotulo}</p>

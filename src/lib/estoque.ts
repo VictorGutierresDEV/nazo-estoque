@@ -1,4 +1,10 @@
 import { criarClienteServidor } from '@/lib/supabase/server'
+import { semErro } from '@/lib/acesso-leitura-nucleo'
+import {
+  acessoDeLeitura,
+  leituraRestrita,
+  unidadeImplantada,
+} from '@/lib/acesso-leitura'
 
 /**
  * Leitura da Etapa 1.
@@ -6,6 +12,10 @@ import { criarClienteServidor } from '@/lib/supabase/server'
  * Nada aqui calcula saldo: saldo vem sempre da view estoque_saldos_locais,
  * que soma o razão. Se um número desta tela não bater com o extrato, o bug
  * está no razão, não aqui — e é isso que se quer.
+ *
+ * Leitura que falha é lançada (`semErro`), não vira lista vazia: com a v57 a
+ * RLS já devolve vazio para o que a pessoa não vê, e um erro engolido ficaria
+ * indistinguível disso.
  */
 
 export type Contexto = {
@@ -117,14 +127,34 @@ export function podeNoSetor(ctx: Contexto, setorId: string, permissao: string) {
 
 export type Setor = { id: string; nome: string; codigo: string; ordem: number }
 
+/**
+ * Desde quando o ciclo diário dos pulmões desta unidade é do Nazo Gestão, ou
+ * `null`. Com o ciclo ligado, o banco recusa a contagem, a requisição e a
+ * divergência gravadas por aqui; a faixa do layout avisa antes.
+ */
+export async function cicloNoNazoGestao(unidadeId: string): Promise<string | null> {
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase
+    .from('abast_unidades')
+    .select('ciclo_desde')
+    .eq('unidade_id', unidadeId)
+    .maybeSingle()
+  // Banco sem o módulo do Nazo Gestão: não há ciclo de lá.
+  if (error && ['42P01', 'PGRST205'].includes(error.code)) return null
+  semErro('o ciclo dos pulmões', error)
+  return data?.ciclo_desde ?? null
+}
+
+/** Com a v57, a RLS devolve só os setores que a pessoa vê. */
 export async function listarSetores(unidadeId: string): Promise<Setor[]> {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_setores')
     .select('id, nome, codigo, ordem')
     .eq('unidade_id', unidadeId)
     .eq('ativo', true)
     .order('ordem')
+  semErro('os setores', error)
   return data ?? []
 }
 
@@ -139,12 +169,13 @@ export type Item = {
 
 export async function listarItens(unidadeId: string): Promise<Item[]> {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_itens')
     .select('id, nome, categoria, unidade_contagem, orientacao_contagem, critico')
     .eq('unidade_id', unidadeId)
     .eq('ativo', true)
     .order('nome')
+  semErro('os itens', error)
   return data ?? []
 }
 
@@ -157,21 +188,28 @@ export type Local = {
 
 export async function listarLocais(unidadeId: string): Promise<Local[]> {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_locais')
     .select('id, tipo, nome, setor_id')
     .eq('unidade_id', unidadeId)
     .eq('ativo', true)
+  semErro('os locais', error)
   return data ?? []
 }
 
-/** saldos[localId][itemId] = quantidade */
+/**
+ * saldos[localId][itemId] = quantidade
+ *
+ * Com a v57, só a gestão lê esta visão; para os demais ela chega vazia. Quem
+ * chama confere `leituraRestrita` antes e não mostra esse vazio como zero.
+ */
 export async function carregarSaldos(unidadeId: string) {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_saldos_locais')
     .select('local_id, item_id, quantidade')
     .eq('unidade_id', unidadeId)
+  semErro('os saldos', error)
 
   const mapa: Record<string, Record<string, number>> = {}
   for (const s of data ?? []) {
@@ -188,20 +226,22 @@ export async function contagemDoCiclo(
   ciclo: string,
 ) {
   const supabase = await criarClienteServidor()
-  const { data: contagem } = await supabase
+  const { data: contagem, error } = await supabase
     .from('estoque_contagens')
     .select('id, situacao, aberta_por, lider_responsavel, finalizada_em, ciclo')
     .eq('unidade_id', unidadeId)
     .eq('setor_id', setorId)
     .eq('ciclo', ciclo)
     .maybeSingle()
+  semErro('a contagem do ciclo', error)
 
   if (!contagem) return { contagem: null, itens: [] as ContagemItem[] }
 
-  const { data: itens } = await supabase
+  const { data: itens, error: erroItens } = await supabase
     .from('estoque_contagem_itens')
     .select('item_id, quantidade, quantidade_esperada, lancado_em')
     .eq('contagem_id', contagem.id)
+  semErro('os itens da contagem', erroItens)
 
   return { contagem, itens: (itens ?? []) as ContagemItem[] }
 }
@@ -224,7 +264,7 @@ export async function rodadaDoCiclo(
   ciclo: string,
 ) {
   const supabase = await criarClienteServidor()
-  const { data: rodada } = await supabase
+  const { data: rodada, error } = await supabase
     .from('estoque_rodadas')
     .select(
       'id, situacao, contagem_id, separado_em, recebido_em, separado_por, recebido_por',
@@ -233,13 +273,15 @@ export async function rodadaDoCiclo(
     .eq('setor_id', setorId)
     .eq('ciclo', ciclo)
     .maybeSingle()
+  semErro('a rodada do ciclo', error)
 
   if (!rodada) return { rodada: null, itens: [] as RodadaItem[] }
 
-  const { data: itens } = await supabase
+  const { data: itens, error: erroItens } = await supabase
     .from('estoque_rodada_itens')
     .select('item_id, qtd_sugerida, qtd_separada, qtd_recebida, motivo_ajuste')
     .eq('rodada_id', rodada.id)
+  semErro('os itens da rodada', erroItens)
 
   return { rodada, itens: (itens ?? []) as RodadaItem[] }
 }
@@ -252,9 +294,10 @@ export type RodadaItem = {
   motivo_ajuste: string | null
 }
 
+/** Com a v57, fora da gestão, só as dos setores que a pessoa vê. */
 export async function divergenciasPendentes(unidadeId: string) {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_divergencias')
     .select(
       'id, setor_id, item_id, origem, quantidade, criada_em, rodada_id, contagem_id',
@@ -262,25 +305,28 @@ export async function divergenciasPendentes(unidadeId: string) {
     .eq('unidade_id', unidadeId)
     .eq('situacao', 'PENDENTE')
     .order('criada_em')
+  semErro('as divergências', error)
   return data ?? []
 }
 
 export async function listarCausas() {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_causas_divergencia')
     .select('codigo, nome, aplica_a, exige_motivo, fluxo_destino')
     .order('codigo')
+  semErro('as causas de divergência', error)
   return data ?? []
 }
 
 export async function minimosDoPulmao(unidadeId: string, setorId: string) {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_minimo_pulmao')
     .select('item_id, quantidade')
     .eq('unidade_id', unidadeId)
     .eq('setor_id', setorId)
+  semErro('os mínimos do pulmão', error)
   const mapa: Record<string, number> = {}
   for (const m of data ?? []) mapa[m.item_id] = Number(m.quantidade)
   return mapa
@@ -288,17 +334,33 @@ export async function minimosDoPulmao(unidadeId: string, setorId: string) {
 
 export async function minimosDaCasa(unidadeId: string) {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_minimo_casa')
     .select('item_id, quantidade')
     .eq('unidade_id', unidadeId)
+  semErro('os mínimos da casa', error)
   const mapa: Record<string, number> = {}
   for (const m of data ?? []) mapa[m.item_id] = Number(m.quantidade)
   return mapa
 }
 
-/** Já houve inventário de implantação? Define a tela inicial. */
-export async function estadoDaImplantacao(unidadeId: string) {
+/**
+ * Já houve inventário de implantação? Define a tela inicial.
+ *
+ * Com a v57, fora da gestão, o razão e os inventários chegam vazios: contar
+ * movimentos daria zero e a tela diria "não implantado" para uma unidade em
+ * operação. Aí quem responde é `estoque_d4_unidade_implantada` (só sim ou
+ * não), e o detalhe do inventário fica com a gestão.
+ */
+export async function estadoDaImplantacao(unidadeId: string): Promise<{
+  inventario: { id: string; data_referencia: string; criado_em: string } | null
+  implantada: boolean
+}> {
+  if (leituraRestrita(await acessoDeLeitura(unidadeId))) {
+    const implantada = await unidadeImplantada(unidadeId)
+    if (implantada !== null) return { inventario: null, implantada }
+  }
+
   const supabase = await criarClienteServidor()
   const [inv, mov] = await Promise.all([
     supabase
@@ -313,15 +375,18 @@ export async function estadoDaImplantacao(unidadeId: string) {
       .eq('unidade_id', unidadeId)
       .in('fluxo', ['SALDO_INICIAL', 'SALDO_INICIAL_PULMAO']),
   ])
+  semErro('o inventário de implantação', inv.error)
+  semErro('o saldo inicial', mov.error)
   return {
     inventario: inv.data?.[0] ?? null,
-    itensLancados: mov.count ?? 0,
+    implantada: (mov.count ?? 0) > 0,
   }
 }
 
+/** O razão. Com a v57, só a gestão lê; quem chama confere antes. */
 export async function carregarExtrato(unidadeId: string, limite = 200) {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_movimentos')
     .select(
       'id, item_id, local_origem_id, local_destino_id, quantidade, fluxo, documento_tipo, momento, registrado_por, funcao_exercida, estorno_de',
@@ -329,12 +394,14 @@ export async function carregarExtrato(unidadeId: string, limite = 200) {
     .eq('unidade_id', unidadeId)
     .order('momento', { ascending: false })
     .limit(limite)
+  semErro('o razão de movimentações', error)
   return data ?? []
 }
 
+/** A trilha. Com a v57, fora da gestão, só os eventos dos setores visíveis. */
 export async function carregarTrilha(unidadeId: string, limite = 200) {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_eventos')
     .select(
       'id, tipo, ator, funcao_exercida, momento, entidade_tipo, entidade_id, dados_anteriores, dados_novos, observacao',
@@ -342,6 +409,7 @@ export async function carregarTrilha(unidadeId: string, limite = 200) {
     .eq('unidade_id', unidadeId)
     .order('momento', { ascending: false })
     .limit(limite)
+  semErro('a trilha de auditoria', error)
   return data ?? []
 }
 
@@ -350,10 +418,11 @@ export async function nomesDePessoas(ids: (string | null)[]) {
   const unicos = [...new Set(ids.filter((i): i is string => !!i))]
   if (!unicos.length) return {} as Record<string, string>
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('id, nome')
     .in('id', unicos)
+  semErro('os nomes das pessoas', error)
   return Object.fromEntries(
     (data ?? []).map((p) => [p.id, p.nome ?? '—']),
   ) as Record<string, string>
@@ -367,6 +436,11 @@ export const CICLO_HOJE = () => new Date().toISOString().slice(0, 10)
  * RB-012: o líder responde pela contagem do seu setor mesmo quando auxiliares
  * participam. Então a lista é de quem exerce função de liderança, não de quem
  * está com o tablet na mão.
+ *
+ * Com a v57, fora da gestão, a RLS só mostra as funções dos setores que a
+ * pessoa vê: direção e CPD (função sem setor) deixam de aparecer. A lista não
+ * é ampliada aqui — isso é decisão de papel, não de tela —; só se diz se veio
+ * alguém de fora do setor, para a tela explicar a lista curta.
  */
 export async function listarLideres(unidadeId: string, setorId?: string) {
   const supabase = await criarClienteServidor()
@@ -380,34 +454,41 @@ export async function listarLideres(unidadeId: string, setorId?: string) {
 
   if (setorId) q = q.or(`setor_id.eq.${setorId},setor_id.is.null`)
 
-  const { data } = await q
+  const { data, error } = await q
+  semErro('os líderes', error)
   const vigentes = (data ?? []).filter(
     (r) => r.inicio <= agora && (r.fim === null || r.fim > agora),
   )
+  const algumDeForaDoSetor = vigentes.some((r) => r.setor_id === null)
 
   const ids = [...new Set(vigentes.map((r) => r.pessoa_id))]
-  if (!ids.length) return []
+  if (!ids.length) return { lideres: [], algumDeForaDoSetor }
 
-  const { data: pessoas } = await supabase
+  const { data: pessoas, error: erroPessoas } = await supabase
     .from('profiles')
     .select('id, nome')
     .in('id', ids)
     .order('nome')
+  semErro('os nomes dos líderes', erroPessoas)
 
   const funcaoDe = new Map(vigentes.map((r) => [r.pessoa_id, r.funcao_codigo]))
-  return (pessoas ?? []).map((p) => ({
-    id: p.id,
-    nome: p.nome ?? '—',
-    funcao: funcaoDe.get(p.id) ?? '',
-  }))
+  return {
+    lideres: (pessoas ?? []).map((p) => ({
+      id: p.id,
+      nome: p.nome ?? '—',
+      funcao: funcaoDe.get(p.id) ?? '',
+    })),
+    algumDeForaDoSetor,
+  }
 }
 
 /** Locais cujo inventário de implantação já foi declarado concluído. */
 export async function locaisConcluidos(unidadeId: string) {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('estoque_inventario_locais')
     .select('local_id, itens_com_saldo, concluido_por, concluido_em')
     .eq('unidade_id', unidadeId)
+  semErro('os locais concluídos', error)
   return data ?? []
 }

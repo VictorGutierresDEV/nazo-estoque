@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types scripts/teste-importacao.ts && node --experimental-strip-types scripts/teste-perfil-desativado.ts"
+    "test": "node --experimental-strip-types scripts/teste-importacao.ts && node --experimental-strip-types scripts/teste-perfil-desativado.ts && node --experimental-strip-types scripts/teste-acesso-leitura.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

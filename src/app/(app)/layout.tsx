@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { carregarContexto, pode } from '@/lib/estoque'
+import { carregarContexto, cicloNoNazoGestao, listarSetores, pode } from '@/lib/estoque'
+import { acessoDeLeitura, leituraRestrita } from '@/lib/acesso-leitura'
 import { sair } from '@/lib/operacoes'
 import { Navegacao } from './navegacao'
 
@@ -24,7 +25,24 @@ export default async function LayoutApp({ children }: LayoutProps<'/'>) {
   const ctx = await carregarContexto()
   if (!ctx) redirect('/login')
 
-  const podeImplantar = !ctx.emProducao && pode(ctx, 'saldo_inicial.lancar')
+  const [acesso, cicloGestao] = await Promise.all([
+    acessoDeLeitura(ctx.unidadeId),
+    cicloNoNazoGestao(ctx.unidadeId),
+  ])
+  // Com a v57, a implantação é só da gestão (concessão direta não basta).
+  const podeImplantar =
+    !ctx.emProducao &&
+    pode(ctx, 'saldo_inicial.lancar') &&
+    !leituraRestrita(acesso)
+
+  // Sem função no Estoque, mas com a v57 a pessoa pode ler setores pelo Nazo
+  // Gestão (owner/manager ou responsável do setor): lê, só não registra. No
+  // legado, como antes.
+  const semFuncao = ctx.permissoes.size === 0
+  const soLeitura =
+    semFuncao &&
+    acesso.modo === 'v57' &&
+    (await listarSetores(ctx.unidadeId)).length > 0
 
   return (
     <div className="flex min-h-full flex-col">
@@ -74,12 +92,28 @@ export default async function LayoutApp({ children }: LayoutProps<'/'>) {
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-5 pb-24 lg:pb-8">
-        {ctx.permissoes.size === 0 && (
-          <p className="mb-5 rounded-lg border border-alerta/30 bg-alerta/10 px-4 py-3 text-sm">
-            Você não tem nenhuma função operacional atribuída nesta unidade,
-            então não consegue ver nem registrar nada. Peça à direção ou ao
-            Gerente de CPD para atribuir sua função.
+        {cicloGestao && (
+          <p role="status" className="mb-5 rounded-lg border border-acento/40 bg-acento-fraco px-4 py-3 text-sm">
+            <strong>Pulmões no Nazo Gestão.</strong> Nesta unidade, a contagem e o abastecimento dos
+            pulmões são feitos no Nazo Gestão, em Pulmões. O que for registrado aqui sobre contagem,
+            requisição ou divergência é recusado.
           </p>
+        )}
+        {soLeitura ? (
+          <p className="mb-5 rounded-lg border border-alerta/30 bg-alerta/10 px-4 py-3 text-sm">
+            Você não tem função operacional no Estoque nesta unidade: consegue
+            consultar os setores do seu acesso, mas não registra nada. Para
+            registrar, peça à direção ou ao Gerente de CPD para atribuir sua
+            função.
+          </p>
+        ) : (
+          semFuncao && (
+            <p className="mb-5 rounded-lg border border-alerta/30 bg-alerta/10 px-4 py-3 text-sm">
+              Você não tem nenhuma função operacional atribuída nesta unidade,
+              então não consegue ver nem registrar nada. Peça à direção ou ao
+              Gerente de CPD para atribuir sua função.
+            </p>
+          )
         )}
         {children}
       </main>

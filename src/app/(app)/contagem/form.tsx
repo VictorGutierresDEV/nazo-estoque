@@ -27,6 +27,8 @@ type Props = {
   contagem: Contagem
   itensContados: ContagemItem[]
   lideres: { id: string; nome: string; funcao: string }[]
+  /** Nota curta sob o seletor de líder (v57: lista só do setor). */
+  notaLideres?: string | null
   podeFinalizar: boolean
 }
 
@@ -494,6 +496,7 @@ function Cabecalho({
 function Finalizar({
   contagem,
   lideres,
+  notaLideres,
   podeFinalizar,
   lider,
   setLider,
@@ -538,6 +541,9 @@ function Finalizar({
             </option>
           ))}
         </select>
+        {notaLideres && (
+          <p className="mt-1.5 text-xs text-tinta-fraca">{notaLideres}</p>
+        )}
       </div>
       <button
         type="button"

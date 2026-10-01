@@ -6,6 +6,8 @@ import {
   minimosDoPulmao,
   pode,
 } from '@/lib/estoque'
+import { acessoDeLeitura, escolherSetor } from '@/lib/acesso-leitura'
+import { AvisoForaDoAcesso } from '../avisos-acesso'
 import { EditorMinimos } from './editor'
 
 export default async function Minimos({ searchParams }: PageProps<'/minimos'>) {
@@ -13,14 +15,18 @@ export default async function Minimos({ searchParams }: PageProps<'/minimos'>) {
   if (!ctx) return null
 
   const params = await searchParams
-  const escopo = params.escopo === 'casa' ? 'casa' : 'pulmao'
 
-  const setores = await listarSetores(ctx.unidadeId)
-  const setorId =
-    typeof params.setor === 'string' &&
-    setores.some((s) => s.id === params.setor)
-      ? params.setor
-      : (setores[0]?.id ?? '')
+  const [setores, acesso] = await Promise.all([
+    listarSetores(ctx.unidadeId),
+    acessoDeLeitura(ctx.unidadeId),
+  ])
+  const { setorId, foraDoAcesso } = escolherSetor(setores, params.setor, acesso)
+
+  // Com a v57, sem setor visível não há pulmão a editar: a aba some e fica o
+  // mínimo da casa (nada de gravar mínimo de pulmão sem setor).
+  const semSetorVisivel = acesso.modo === 'v57' && setores.length === 0
+  const escopo =
+    params.escopo === 'casa' || semSetorVisivel ? 'casa' : 'pulmao'
 
   const [itens, doPulmao, daCasa] = await Promise.all([
     listarItens(ctx.unidadeId),
@@ -30,6 +36,7 @@ export default async function Minimos({ searchParams }: PageProps<'/minimos'>) {
 
   return (
     <div className="space-y-5">
+      {foraDoAcesso && escopo === 'pulmao' && <AvisoForaDoAcesso />}
       <div>
         <h1 className="text-xl font-bold">Mínimos</h1>
         <p className="mt-1 text-sm text-tinta-fraca">
@@ -43,6 +50,7 @@ export default async function Minimos({ searchParams }: PageProps<'/minimos'>) {
         escopo={escopo}
         setores={setores}
         setorId={setorId}
+        semSetorVisivel={semSetorVisivel}
         itens={itens}
         valores={escopo === 'pulmao' ? doPulmao : daCasa}
         podeDefinirPulmao={pode(ctx, 'parametro.minimo_pulmao.definir')}

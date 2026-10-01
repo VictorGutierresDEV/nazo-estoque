@@ -310,7 +310,12 @@ begin
 
   update public.estoque_movimentos set quantidade = 1 where id = v_mov;
   get diagnostics v_n = row_count;
+  -- O valor intacto é conferido como dono: com a v57 o líder não lê o razão,
+  -- e ler como ele daria nulo (falso negativo), não a prova de que o update
+  -- não passou. O update acima continua sendo feito como o líder.
+  execute 'reset role';
   select quantidade into v_q from public.estoque_movimentos where id = v_mov;
+  execute 'set local role authenticated';
   if v_n = 0 and v_q = 500 then v_ok := v_ok + 1;
     v_rel := v_rel || 'H18 ok    RLS recusou update no razao (0 linhas, valor intacto)' || E'\n';
   else v_fail := v_fail + 1;

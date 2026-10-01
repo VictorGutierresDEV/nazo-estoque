@@ -6,18 +6,24 @@ import {
   listarSetores,
   pode,
 } from '@/lib/estoque'
+import { acessoDeLeitura, leituraRestrita } from '@/lib/acesso-leitura'
+import { SemSetorVisivel } from '../avisos-acesso'
 import { ListaDivergencias } from './lista'
 
 export default async function Divergencias() {
   const ctx = await carregarContexto()
   if (!ctx) return null
 
-  const [pendentes, causas, itens, setores] = await Promise.all([
+  const [pendentes, causas, itens, setores, acesso] = await Promise.all([
     divergenciasPendentes(ctx.unidadeId),
     listarCausas(),
     listarItens(ctx.unidadeId),
     listarSetores(ctx.unidadeId),
+    acessoDeLeitura(ctx.unidadeId),
   ])
+
+  // Com a v57, sem setor visível a lista vazia não quer dizer "tudo apurado".
+  if (acesso.modo === 'v57' && setores.length === 0) return <SemSetorVisivel />
 
   return (
     <div className="space-y-5">
@@ -37,6 +43,7 @@ export default async function Divergencias() {
         itens={itens}
         setores={setores}
         podeApurar={pode(ctx, 'divergencia.apurar')}
+        soDosSeusSetores={leituraRestrita(acesso)}
       />
     </div>
   )

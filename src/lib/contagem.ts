@@ -5,6 +5,11 @@ import {
   minimosDoPulmao,
   type Item,
 } from '@/lib/estoque'
+import {
+  acessoDeLeitura,
+  itensComSaldoNoPulmao,
+  leituraRestrita,
+} from '@/lib/acesso-leitura'
 
 /**
  * A fila de itens a contar num pulmão.
@@ -22,26 +27,21 @@ import {
  * consegue distinguir "tem saldo" de "tem mínimo", então a contagem continua
  * cega — o que se protege é o número, não a existência do item.
  *
+ * Com a v57, fora da gestão, a visão de saldos chega vazia: os itens com
+ * saldo vêm de `estoque_d4_itens_com_saldo_pulmao`, que já responde sem
+ * quantidade. Gestão e modo legado leem os saldos como antes.
+ *
  * `resto` é o catálogo que sobrou, para o caso de haver no pulmão algo que
  * ninguém previu. Sem essa saída, a tela seria mais rápida e menos verdadeira.
  */
 export async function filaDeContagem(unidadeId: string, setorId: string) {
-  const [itens, locais, saldos, minimos] = await Promise.all([
+  const [itens, minimos, comSaldo] = await Promise.all([
     listarItens(unidadeId),
-    listarLocais(unidadeId),
-    carregarSaldos(unidadeId),
     minimosDoPulmao(unidadeId, setorId),
+    itensComSaldo(unidadeId, setorId),
   ])
 
-  const pulmao = locais.find(
-    (l) => l.tipo === 'PULMAO' && l.setor_id === setorId,
-  )
-  const saldoPulmao = pulmao ? (saldos[pulmao.id] ?? {}) : {}
-
-  const naFila = new Set<string>(Object.keys(minimos))
-  for (const [itemId, q] of Object.entries(saldoPulmao)) {
-    if (q > 0) naFila.add(itemId)
-  }
+  const naFila = new Set<string>([...Object.keys(minimos), ...comSaldo])
 
   const fila: Item[] = itens.filter((i) => naFila.has(i.id))
   const resto: Item[] = itens.filter((i) => !naFila.has(i.id))
@@ -49,4 +49,27 @@ export async function filaDeContagem(unidadeId: string, setorId: string) {
   // Pulmão novo, sem mínimo e sem saldo: a fila seria vazia e a tela
   // inútil. Nesse caso o catálogo inteiro é a fila.
   return fila.length ? { fila, resto } : { fila: resto, resto: [] }
+}
+
+/** Itens com saldo > 0 no pulmão do setor, sem quantidade. */
+async function itensComSaldo(
+  unidadeId: string,
+  setorId: string,
+): Promise<string[]> {
+  if (leituraRestrita(await acessoDeLeitura(unidadeId))) {
+    const ids = await itensComSaldoNoPulmao(setorId)
+    if (ids !== null) return ids
+  }
+
+  const [locais, saldos] = await Promise.all([
+    listarLocais(unidadeId),
+    carregarSaldos(unidadeId),
+  ])
+  const pulmao = locais.find(
+    (l) => l.tipo === 'PULMAO' && l.setor_id === setorId,
+  )
+  const saldoPulmao = pulmao ? (saldos[pulmao.id] ?? {}) : {}
+  return Object.entries(saldoPulmao)
+    .filter(([, q]) => q > 0)
+    .map(([itemId]) => itemId)
 }
